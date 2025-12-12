@@ -2,7 +2,7 @@
 
 :root {
   /* Jony Ive 的深空灰：极低反光率的阳极氧化铝 */
-  --bg-aluminum: #0b0b0bfd; 
+  --bg-aluminum: #111112; 
   --text-primary: #e5e5e5;
   --text-secondary: #888888;
   --text-dim: #444444;
@@ -15,21 +15,41 @@
 
 body {
   margin: 0;
+  /* 1. 这里只保留纯色底色 */
   background-color: var(--bg-aluminum);
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  position: relative; /* 关键：为了让 ::before 定位 */
+}
+
+/* 2. 核心修改：把图片放到这里 */
+body::before {
+  content: "";
+  position: fixed; /* 即使滚动页面，纹理也不动，像金属板本身 */
+  inset: 0;        /* 铺满全屏 */
+  z-index: -1;     /* 放在文字后面 */
   
-  /* 核心：物理颗粒感纹理 */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
-  background-attachment: fixed;
+  /* A. 引用你的图片 */
+  background-image: url("/SteelPanelDarkDirt.png");
+  
+  /* B. 图片铺设方式 (如果是无缝纹理用 repeat，是大图用 cover) */
+  background-repeat: repeat;
+  background-size: auto; 
+  /* background-size: cover; */ /* 如果图片有接缝，试着解开这行注释 */
+
+  /* C. 关键调色：让图片融入深灰色 */
+  opacity: 0.5;           /* 透明度：数值越小越隐蔽 (建议 0.1 - 0.2) */
+  mix-blend-mode: overlay; /* 混合模式：让纹理“蚀刻”在底色上 */
+  
+  pointer-events: none;
 }
 
 /* 装饰：嵌入式 OLED 屏幕的微光 (用于叙事背景) */
 .oled-glow {
-  background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0b0b0b 100%);
-  box-shadow: inset 0 0 100px rgba(0,0,0,0.8); /* 内阴影，模拟屏幕嵌入深度 */
+  background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0b0b0bcd 100%);
+  box-shadow: inset 0 0 100px rgba(0,0,0,5); /* 内阴影，模拟屏幕嵌入深度 */
 }
 
 /* 星海粒子 (CSS 生成) */
