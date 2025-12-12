@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ALGORITHMIC COLONIZATION: FINAL</title>
+  
+  <!-- CORE LIBRARIES -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            chrome: {
+              50: '#f9fafb', 100: '#f3f4f6', 200: '#e5e7eb', 300: '#d1d5db',
+              400: '#9ca3af', 500: '#6b7280', 600: '#4b5563', 700: '#374151',
+              800: '#1f2937', 900: '#111827', 950: '#030712',
+            },
+            accent: {
+              gold: '#D4AF37',
+              alert: '#ff3333',
+              success: '#00ff9d',
+              cyan: '#00e5ff',
+            }
+          },
+          fontFamily: {
+            display: ['"Inter"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'], 
+            mono: ['"JetBrains Mono"', 'monospace'], 
+          },
+          animation: {
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- FONTS -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    :root { --cursor-color: #D4AF37; }
+    body { background-color: #020202; color: #e5e7eb; overflow-x: hidden; cursor: none; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { background: #333; }
+
+    /* Darker, denser glass for high contrast */
+    .glass-panel {
+      background: rgba(5, 5, 5, 0.85); 
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 40px rgba(0, 0, 0, 0.8);
+    }
+    
+    .grid-bg {
+      background-size: 60px 60px;
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    }
+    
+    /* TECH MARKERS */
+    .crosshair {
+      position: absolute; width: 10px; height: 10px;
+      border-left: 1px solid rgba(255,255,255,0.3);
+      border-top: 1px solid rgba(255,255,255,0.3);
+    }
+    .crosshair.br { border:none; border-right: 1px solid rgba(255,255,255,0.3); border-bottom: 1px solid rgba(255,255,255,0.3); }
+
+    #cursor {
+      position: fixed; top: 0; left: 0; width: 12px; height: 12px;
+      border: 1px solid #fff; border-radius: 50%; pointer-events: none; z-index: 9999;
+      transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+      transition: width 0.2s, height 0.2s, background 0.2s;
+      mix-blend-mode: exclusion;
+    }
+    #cursor.hovered { 
+      width: 50px; height: 50px; background: rgba(212, 175, 55, 0.2); border-color: #D4AF37;
+    }
+
+    .mono-num { font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; letter-spacing: -0.05em; }
+    .text-glow { text-shadow: 0 0 20px rgba(255,255,255,0.3); }
+  </style>
+</head>
+<body>
+  <div id="cursor"></div>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const DATA = {
+      radar: {
+        axes: ["AESTHETICS", "COST", "SOCIAL", "QUIET", "UTILITY"],
+        values: [45, 30, -15, -55, -68] 
+      },
+      colors: {
+        commercial: '#D4AF37', residential: '#374151', 'mixed-use': '#ff3333',
+        public: '#ffffff', 'green-space': '#00ff9d', unclassified: '#111827', cultural: '#b392ac'
+      }
+    };
+
+    const MAP_BLOCKS_RAW = [
+        { x: 20, y: 112, w: 70, h: 35, type: "commercial" }, { x: 100, y: 112, w: 90, h: 35, type: "commercial" },
+        { x: 240, y: 21, w: 210, h: 126, type: "public" }, { x: 500, y: 119, w: 40, h: 28, type: "public" },
+        { x: 660, y: 28, w: 30, h: 21, type: "residential" }, { x: 700, y: 28, w: 30, h: 21, type: "residential" },
+        { x: 740, y: 28, w: 50, h: 21, type: "residential" }, { x: 660, y: 63, w: 30, h: 21, type: "residential" },
+        { x: 700, y: 63, w: 30, h: 21, type: "residential" }, { x: 740, y: 63, w: 50, h: 21, type: "residential" },
+        { x: 660, y: 98, w: 60, h: 28, type: "residential" }, { x: 730, y: 98, w: 60, h: 28, type: "residential" },
+        { x: 830, y: 28, w: 60, h: 21, type: "residential" }, { x: 900, y: 28, w: 60, h: 21, type: "residential" },
+        { x: 20, y: 301, w: 70, h: 35, type: "public" }, { x: 100, y: 301, w: 90, h: 35, type: "unclassified" },
+        { x: 20, y: 350, w: 70, h: 35, type: "public" }, { x: 100, y: 350, w: 90, h: 35, type: "unclassified" },
+        { x: 20, y: 399, w: 70, h: 35, type: "unclassified" }, { x: 100, y: 399, w: 90, h: 35, type: "unclassified" },
+        { x: 20, y: 448, w: 70, h: 35, type: "commercial" }, { x: 100, y: 448, w: 90, h: 35, type: "residential" },
+        { x: 20, y: 497, w: 70, h: 35, type: "unclassified" }, { x: 100, y: 497, w: 90, h: 35, type: "unclassified" },
+        { x: 20, y: 175, w: 40, h: 56, type: "commercial" }, { x: 70, y: 175, w: 120, h: 56, type: "public" },
+        { x: 20, y: 252, w: 70, h: 24.5, type: "commercial" }, { x: 100, y: 252, w: 90, h: 24.5, type: "commercial" },
+        { x: 220, y: 378, w: 140, h: 42, type: "unclassified" }, { x: 220, y: 427, w: 140, h: 42, type: "unclassified" },
+        { x: 220, y: 497, w: 140, h: 35, type: "commercial" }, { x: 220, y: 539, w: 140, h: 42, type: "unclassified" },
+        { x: 220, y: 175, w: 100, h: 28, type: "public" }, { x: 220, y: 210, w: 100, h: 24.5, type: "unclassified" },
+        { x: 220, y: 280, w: 140, h: 70, type: "mixed-use" }, { x: 330, y: 175, w: 130, h: 56, type: "unclassified" },
+        { x: 490, y: 203, w: 120, h: 63, type: "public" }, { x: 490, y: 280, w: 120, h: 70, type: "unclassified" },
+        { x: 650, y: 175, w: 60, h: 28, type: "residential" }, { x: 720, y: 175, w: 70, h: 28, type: "residential" },
+        { x: 650, y: 217, w: 60, h: 28, type: "residential" }, { x: 720, y: 217, w: 70, h: 28, type: "residential" },
+        { x: 650, y: 301, w: 140, h: 42, type: "mixed-use" }, { x: 390, y: 378, w: 220, h: 91, type: "green-space" },
+        { x: 650, y: 378, w: 60, h: 21, type: "residential" }, { x: 720, y: 378, w: 70, h: 21, type: "residential" },
+        { x: 650, y: 406, w: 60, h: 63, type: "residential" }, { x: 720, y: 406, w: 70, h: 63, type: "residential" },
+        { x: 390, y: 497, w: 100, h: 42, type: "residential" }, { x: 390, y: 546, w: 100, h: 35, type: "residential" },
+        { x: 500, y: 497, w: 110, h: 42, type: "residential" }, { x: 500, y: 546, w: 110, h: 35, type: "residential" },
+        { x: 650, y: 497, w: 60, h: 42, type: "commercial" }, { x: 650, y: 546, w: 60, h: 35, type: "cultural" },
+        { x: 720, y: 497, w: 70, h: 42, type: "residential" }, { x: 720, y: 546, w: 70, h: 35, type: "residential" }
+    ];
+    const MAP_BLOCKS = MAP_BLOCKS_RAW.filter(d => d.x < 810);
+
+    // --- THREE.JS BACKGROUND (Full Coverage) ---
+    const LiquidBackground = () => {
+      const mountRef = useRef(null);
+      useEffect(() => {
+        if (!mountRef.current) return;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 2.5;
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        const updateSize = () => {
+          if (!mountRef.current) return;
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+        };
+        updateSize();
+        
+        window.addEventListener('resize', updateSize);
+        mountRef.current.appendChild(renderer.domElement);
+        
+        // Use PlaneGeometry 20x20 to ensure no black edges on wide screens
+        const geometry = new THREE.PlaneGeometry(20, 20, 128, 128); 
+        const material = new THREE.ShaderMaterial({
+          uniforms: { uTime: { value: 0 }, uMouse: { value: new THREE.Vector2(0.5, 0.5) } },
+          vertexShader: `
+            varying vec2 vUv; varying float vElev; uniform float uTime; uniform vec2 uMouse;
+            void main() {
+              vUv = uv; vec3 pos = position;
+              float dist = distance(uv, uMouse * 3.0 - 1.0);
+              float ripple = sin(dist * 12.0 - uTime * 1.2) * exp(-dist * 2.0) * 0.15;
+              pos.z += sin(pos.x * 0.8 + uTime * 0.4) * 0.3 + cos(pos.y * 1.2 + uTime * 0.3) * 0.3 + ripple;
+              vElev = pos.z; gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+          `,
+          fragmentShader: `
+            varying vec2 vUv; varying float vElev;
+            void main() {
+              float mixStrength = smoothstep(-0.6, 0.6, vElev);
+              // Deep metallic look: Dark Gray to Soft Silver
+              vec3 col = mix(vec3(0.05), vec3(0.7, 0.75, 0.8), mixStrength);
+              gl_FragColor = vec4(col, 1.0);
+            }
+          `
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+        
+        const clock = new THREE.Clock();
+        const animate = () => {
+          material.uniforms.uTime.value = clock.getElapsedTime();
+          renderer.render(scene, camera);
+          requestAnimationFrame(animate);
+        };
+        animate();
+        
+        const handleMove = (e) => {
+          material.uniforms.uMouse.value.set(e.clientX/window.innerWidth, 1.0 - e.clientY/window.innerHeight);
+        };
+        window.addEventListener('mousemove', handleMove);
+        return () => {
+          window.removeEventListener('mousemove', handleMove);
+          window.removeEventListener('resize', updateSize);
+          mountRef.current?.removeChild(renderer.domElement);
+        };
+      }, []);
+      return <div ref={mountRef} className="fixed inset-0 z-0 pointer-events-none opacity-50" />;
+    };
+
+    // --- UI COMPONENTS (Enhanced with "Tech Markers") ---
+    const ChromePanel = ({ children, figureId, className = "", noPadding = false }) => (
+      <div className={`relative group glass-panel flex flex-col ${className}`}>
+        {/* Corner Decorators */}
+        <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/40"></div>
+        <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/40"></div>
+        <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/40"></div>
+        <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/40"></div>
+
+        {/* Minimal Label */}
+        <div className="absolute top-0 left-0 z-20 px-2 py-1 bg-black/40 border-r border-b border-white/10 backdrop-blur-md flex items-center gap-2">
+           <div className="w-1 h-1 bg-accent-gold rounded-full"></div>
+           <span className="text-[9px] font-mono text-accent-gold tracking-widest font-bold">FIG.{figureId}</span>
+        </div>
+        
+        <div className={`relative z-10 h-full flex flex-col ${noPadding ? '' : 'p-6'}`}>
+          {children}
+        </div>
+      </div>
+    );
+
+    const SectionHeader = ({ num, title, subtitle }) => (
+      <div className="mb-12 flex flex-col items-start w-full relative pl-6">
+        {/* Left Bar Decor */}
+        <div className="absolute left-0 top-1 bottom-1 w-[2px] bg-accent-gold"></div>
+        
+        <div className="flex items-baseline gap-3 mb-2">
+            <span className="font-mono text-xs text-accent-gold">0{num}</span>
+            <h2 className="text-4xl md:text-6xl font-display font-bold tracking-tighter text-white text-glow">{title}</h2>
+        </div>
+        <p className="font-mono text-[10px] text-chrome-400 tracking-[0.2em] uppercase flex items-center gap-4">
+            {subtitle} <span className="hidden md:inline-block w-12 h-[1px] bg-white/20"></span>
+        </p>
+      </div>
+    );
+
+    const Section = ({ children, id, className = "" }) => (
+      <section id={id} className={`min-h-screen relative z-10 w-full px-6 md:px-12 lg:px-24 py-24 flex flex-col justify-center border-b border-white/5 ${className}`}>
+        {/* Background Grid Line Decor */}
+        <div className="absolute left-12 top-0 bottom-0 w-[1px] bg-white/5 hidden lg:block"></div>
+        <div className="absolute right-12 top-0 bottom-0 w-[1px] bg-white/5 hidden lg:block"></div>
+        
+        {/* Crosshairs for structural feel */}
+        <div className="absolute top-12 left-12 crosshair hidden lg:block"></div>
+        <div className="absolute bottom-12 right-12 crosshair br hidden lg:block"></div>
+        
+        {children}
+      </section>
+    );
+
+    // --- VIZ COMPONENTS ---
+    const DensityRasterMap = () => {
+        const canvasRef = useRef(null);
+        const containerRef = useRef(null);
+        useEffect(() => {
+          if (!containerRef.current || !canvasRef.current) return;
+          const cvs = canvasRef.current; const ctx = cvs.getContext('2d');
+          const resize = () => { cvs.width = containerRef.current.offsetWidth; cvs.height = 400; };
+          resize();
+          const observer = new ResizeObserver(resize); observer.observe(containerRef.current);
+
+          let time = 0;
+          const CELL = 5; 
+          
+          const render = () => {
+              time += 0.02;
+              const w = cvs.width; const h = cvs.height;
+              const sx = w / 820; const sy = h / 600;
+
+              ctx.fillStyle = '#080808'; ctx.fillRect(0,0,w,h);
+
+              MAP_BLOCKS.forEach(b => {
+                 if (b.type === 'commercial' || b.type === 'mixed-use') {
+                    const cx = (b.x + b.w/2) * sx; const cy = (b.y + b.h/2) * sy;
+                    const radius = (b.w * sx) * 1.5;
+                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                    grad.addColorStop(0, 'rgba(212, 175, 55, 0.1)'); 
+                    grad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad; ctx.fillRect(0,0,w,h);
+                 }
+              });
+
+              for(let i=0; i<MAP_BLOCKS.length; i++) {
+                  const b = MAP_BLOCKS[i];
+                  const bx = b.x * sx; const by = b.y * sy;
+                  const bw = b.w * sx; const bh = b.h * sy;
+                  
+                  const startX = Math.floor(bx / CELL); const endX = Math.floor((bx + bw) / CELL);
+                  const startY = Math.floor(by / CELL); const endY = Math.floor((by + bh) / CELL);
+                  
+                  ctx.fillStyle = DATA.colors[b.type] || '#333';
+                  
+                  for(let x=startX; x<endX; x++) {
+                      for(let y=startY; y<endY; y++) {
+                          let alpha = 0.3;
+                          if (b.type === 'commercial') alpha = 0.6 + Math.sin(time + x*0.1) * 0.15;
+                          if (b.type === 'mixed-use') alpha = 0.5;
+                          if (b.type === 'residential') alpha = 0.2; 
+                          ctx.globalAlpha = alpha;
+                          ctx.fillRect(x*CELL, y*CELL, CELL-1, CELL-1);
+                      }
+                  }
+              }
+              // Overlay Grid lines
+              ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
+              for(let x=0; x<w; x+=40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+
+              ctx.globalAlpha = 1.0;
+              requestAnimationFrame(render);
+          };
+          render();
+          return () => observer.disconnect();
+        }, []);
+        return <div ref={containerRef} className="w-full relative bg-black/40 border-b border-white/10"><canvas ref={canvasRef} className="block" /></div>;
+    };
+
+    const SankeyFlow = () => {
+        const canvasRef = useRef(null); const containerRef = useRef(null);
+        useEffect(() => {
+            if(!canvasRef.current || !containerRef.current) return;
+            const cvs = canvasRef.current; const ctx = cvs.getContext('2d');
+            let time = 0;
+            const resize = () => { cvs.width = containerRef.current.offsetWidth; cvs.height = containerRef.current.offsetHeight; };
+            resize();
+            const observer = new ResizeObserver(resize); observer.observe(containerRef.current);
+
+            const render = () => {
+                time += 0.01;
+                const w = cvs.width; const h = cvs.height;
+                ctx.clearRect(0,0,w,h);
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.02)'; ctx.lineWidth = 1;
+                for(let i=0; i<w; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,h); ctx.stroke(); }
+
+                const startX = 40; const endX = w - 60; const midY = h/2;
+                const streams = [
+                    { label: "CHURN (46%)", pct: 0.46, y: h*0.2, color: "#666" },
+                    { label: "TRANSIT (30%)", pct: 0.30, y: h*0.5, color: "#888" },
+                    { label: "HABIT (24%)", pct: 0.24, y: h*0.8, color: "#D4AF37" }
+                ];
+                let currentY = midY - (h*0.5)/2; 
+                ctx.fillStyle = "#fff"; ctx.font = '10px "JetBrains Mono"'; ctx.fillText("INFLUX (100%)", 10, currentY - 15);
+
+                streams.forEach(s => {
+                    const thickness = (h*0.5) * s.pct; const srcY = currentY + thickness/2;
+                    ctx.beginPath(); ctx.moveTo(startX + 20, srcY);
+                    ctx.bezierCurveTo(w*0.4, srcY, w*0.6, s.y, endX, s.y);
+                    ctx.lineWidth = thickness; ctx.strokeStyle = "rgba(255,255,255,0.03)"; ctx.stroke();
+                    
+                    ctx.beginPath(); ctx.moveTo(startX + 20, srcY);
+                    ctx.bezierCurveTo(w*0.4, srcY, w*0.6, s.y, endX, s.y);
+                    ctx.lineWidth = 1; ctx.strokeStyle = s.color;
+                    ctx.setLineDash([4, 6]); ctx.lineDashOffset = -time * 15;
+                    ctx.stroke(); ctx.setLineDash([]);
+                    
+                    ctx.beginPath(); ctx.arc(endX, s.y, 3, 0, Math.PI*2); ctx.fillStyle = s.color; ctx.fill();
+                    ctx.fillStyle = s.color; ctx.textAlign = 'right'; ctx.fillText(s.label, w - 10, s.y - 5);
+                    currentY += thickness;
+                });
+                requestAnimationFrame(render);
+            };
+            render();
+            return () => observer.disconnect();
+        }, []);
+        return <div ref={containerRef} className="w-full h-[250px]"><canvas ref={canvasRef} /></div>;
+    };
+
+    const DeviationChart = () => {
+        const canvasRef = useRef(null); const containerRef = useRef(null);
+        useEffect(() => {
+            if(!canvasRef.current || !containerRef.current) return;
+            const cvs = canvasRef.current; const ctx = cvs.getContext('2d');
+            const resize = () => { cvs.width = containerRef.current.offsetWidth; cvs.height = containerRef.current.offsetHeight; draw(); };
+            const draw = () => {
+                const w = cvs.width; const h = cvs.height; const cx = w / 2; const margin = 30;
+                const step = (h - margin*2) / DATA.radar.axes.length;
+                ctx.clearRect(0,0,w,h);
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+
+                ctx.beginPath(); ctx.strokeStyle = '#333'; ctx.setLineDash([2,2]);
+                ctx.moveTo(cx, 10); ctx.lineTo(cx, h-10); ctx.stroke(); ctx.setLineDash([]);
+                ctx.textAlign = 'center'; ctx.fillStyle = '#444'; ctx.font = '9px "JetBrains Mono"';
+                ctx.fillText("DEFICIT (-)", cx - 40, h - 5); ctx.fillText("SURPLUS (+)", cx + 40, h - 5);
+
+                DATA.radar.axes.forEach((label, i) => {
+                    const val = DATA.radar.values[i];
+                    const y = margin + i * step; const xEnd = cx + (val/100) * (w*0.4);
+                    const color = val > 0 ? '#D4AF37' : '#ff3333';
+                    
+                    ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(xEnd, y);
+                    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(xEnd, y, 3, 0, Math.PI*2);
+                    ctx.fillStyle = '#000'; ctx.fill(); ctx.stroke();
+                    
+                    ctx.fillStyle = '#666'; ctx.textAlign = val > 0 ? 'left' : 'right';
+                    ctx.fillText(label, cx + (val > 0 ? -10 : 10), y - 8);
+                    ctx.fillStyle = color; ctx.textAlign = val > 0 ? 'left' : 'right';
+                    ctx.fillText(Math.abs(val) + '%', xEnd + (val > 0 ? 8 : -8), y+3);
+                });
+            };
+            resize();
+            const observer = new ResizeObserver(resize); observer.observe(containerRef.current);
+            return () => observer.disconnect();
+        }, []);
+        return <div ref={containerRef} className="w-full h-[280px]"><canvas ref={canvasRef} /></div>;
+    };
+
+    const SensorStrip = () => {
+        const canvasRef = useRef(null); const containerRef = useRef(null);
+        useEffect(() => {
+            if(!canvasRef.current || !containerRef.current) return;
+            const cvs = canvasRef.current; const ctx = cvs.getContext('2d'); let tick = 0;
+            const resize = () => { cvs.width = containerRef.current.offsetWidth; cvs.height = containerRef.current.offsetHeight; };
+            resize();
+            const observer = new ResizeObserver(resize); observer.observe(containerRef.current);
+            const render = () => {
+                tick++; const w = cvs.width; const h = cvs.height; const rowH = h / 3;
+                ctx.fillStyle = '#080808'; ctx.fillRect(0,0,w,h);
+                
+                const scanX = (tick * 2) % w;
+                ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fillRect(scanX, 0, 2, h);
+
+                const drawCh = (idx, color, label, waveFn) => {
+                    const y = idx * rowH; const cy = y + rowH/2;
+                    ctx.strokeStyle = '#1a1a1a'; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+                    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 1;
+                    for(let x=0; x<w; x+=3) {
+                        const val = cy + waveFn(x + tick*2);
+                        if(x===0) ctx.moveTo(x,val); else ctx.lineTo(x,val);
+                    }
+                    ctx.stroke();
+                    ctx.fillStyle = color; ctx.font = '9px "JetBrains Mono"'; ctx.fillText(label, 8, y + 12);
+                };
+                drawCh(0, '#D4AF37', 'CH1. ROUGHNESS', (t) => (Math.random()-0.5) * 12 * (Math.sin(t*0.02)>0?1:0.3));
+                drawCh(1, '#00e5ff', 'CH2. GLARE', (t) => Math.sin(t*0.06) > 0.85 ? 15 : 1);
+                drawCh(2, '#ffffff', 'CH3. BIOMASS', (t) => Math.sin(t*0.01)*2);
+                requestAnimationFrame(render);
+            };
+            render();
+            return () => observer.disconnect();
+        }, []);
+        return <div ref={containerRef} className="w-full h-[180px] border border-white/10 bg-black"><canvas ref={canvasRef} /></div>;
+    };
+
+    const DataDecor = ({ label, value }) => (
+        <div className="flex flex-col border-l border-white/10 pl-3">
+            <span className="text-[9px] text-gray-600 font-mono uppercase tracking-wider mb-1">{label}</span>
+            <span className="text-sm text-white font-mono font-bold">{value}</span>
+        </div>
+    );
+
+    // --- SECTIONS ---
+
+    const Cover = () => (
+      <Section className="h-screen items-start justify-center">
+        <div className="relative z-10 mix-blend-difference space-y-6">
+          <h1 className="text-[10vw] leading-[0.8] font-display font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-300 to-gray-500">
+            ALGORITHMIC<br/>COLONIZATION
+          </h1>
+          <div className="flex items-center gap-6">
+             <div className="h-[2px] w-24 bg-accent-gold"></div>
+             <p className="font-serif italic text-xl md:text-2xl text-chrome-200">
+               Quantifying the displacement of community memory.
+             </p>
+          </div>
+        </div>
+      </Section>
+    );
+
+    const Thesis = () => (
+      <Section id="thesis">
+        <SectionHeader num="01" title="DETERMINISM" subtitle="The 'Micro-Vacation' Interface." />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 relative">
+          <div className="text-xl md:text-3xl font-serif text-chrome-200 leading-relaxed pr-8">
+            "The district is no longer a neighborhood, but a <span className="text-white text-glow italic">Visual Consumption Stage</span>."
+          </div>
+          <div className="font-mono text-xs text-chrome-400 leading-loose border-l border-chrome-800 pl-6 flex flex-col justify-center space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-accent-gold animate-pulse"></div>
+                <strong className="text-white">DATA POINT</strong>
+            </div>
+            <p>74% visitors are locals, yet 45% define 'Photos' as primary goal.</p>
+            <p>Physical space is renovated for algorithmic curation, decoupling function from resident needs.</p>
+          </div>
+        </div>
+      </Section>
+    );
+
+    const Morphology = () => (
+      <Section id="morphology">
+        <SectionHeader num="02" title="SPATIAL RECODING" subtitle="Real-World Mapping: The Commercial Overlay." />
+        
+        <div className="flex flex-col gap-0 w-full border border-white/10 bg-black/60 relative backdrop-blur-sm">
+            {/* Tech Corner Accents */}
+            <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-accent-gold"></div>
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-r-2 border-b-2 border-white/20"></div>
+
+            <ChromePanel figureId="2.1" noPadding className="border-0">
+               <DensityRasterMap />
+            </ChromePanel>
+            
+            {/* HUD-STYLE CONSOLE */}
+            <div className="bg-[#050505] border-t border-white/10 p-6 flex flex-col md:flex-row gap-8 items-stretch relative overflow-hidden">
+                 {/* Moving background scan effect in console */}
+                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 translate-x-[-100%] animate-[scan_3s_linear_infinite] pointer-events-none"></div>
+
+                 <div className="flex-1 border-l-2 border-accent-gold pl-4 py-1 z-10 flex flex-col justify-center">
+                    <h4 className="text-accent-gold font-mono text-[10px] uppercase mb-2 tracking-widest">Morphological Conflict</h4>
+                    <p className="font-serif text-sm text-gray-400 leading-snug">
+                       "Organic residential fabrics are forcibly anti-aliased into homogenous commercial units."
+                    </p>
+                 </div>
+                 
+                 <div className="flex gap-12 items-center border-l border-white/10 pl-8 z-10">
+                     <div>
+                        <div className="text-[9px] font-mono text-gray-600 uppercase tracking-widest mb-1">Clustering</div>
+                        <div className="text-4xl font-display font-bold text-white mono-num">0.78 <span className="text-[12px] text-accent-gold align-top font-normal">▲</span></div>
+                     </div>
+                     <div>
+                        <div className="text-[9px] font-mono text-gray-600 uppercase tracking-widest mb-1">Fragmentation</div>
+                        <div className="text-4xl font-display font-bold text-white mono-num">0.62 <span className="text-[12px] text-gray-600 align-top font-normal">IDX</span></div>
+                     </div>
+                 </div>
+
+                 <div className="flex flex-col justify-center border-l border-white/10 pl-8 pr-4 z-10">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-[9px] font-mono text-gray-400">
+                        <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-[#D4AF37]"></span> COMM</span>
+                        <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-[#374151]"></span> RES</span>
+                        <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-[#ff3333]"></span> MIX</span>
+                        <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-[#fff]"></span> PUBLIC</span>
+                    </div>
+                 </div>
+            </div>
+        </div>
+      </Section>
+    );
+
+    const Temporal = () => (
+      <Section id="temporal">
+        <SectionHeader num="03" title="TRAFFIC CHURN" subtitle="Velocity Analysis." />
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-8 items-start">
+            <div className="md:col-span-4 flex flex-col justify-between h-full space-y-8">
+                <div>
+                    <h3 className="text-white text-lg font-bold mb-2 font-display">VELOCITY vs. STICKINESS</h3>
+                    <p className="font-mono text-xs text-gray-400 leading-loose tech-border-b pb-4 mb-4">
+                        Influx is high, retention is structurally low. The site functions as a <span className="text-accent-gold">High-Velocity Conduit</span>.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                         <DataDecor label="Retention" value="24.0%" />
+                         <DataDecor label="Dwell Time" value="< 45m" />
+                    </div>
+                </div>
+            </div>
+
+            <div className="md:col-span-8">
+                <ChromePanel figureId="3.0">
+                  <SankeyFlow />
+                </ChromePanel>
+            </div>
+        </div>
+        <div className="flex justify-between font-mono text-[10px] text-gray-500 pt-4 border-t border-white/5 bg-white/5 px-4 py-2">
+          <span>NOVELTY: 46% (High Churn)</span>
+          <span>TRANSITIONAL: 30%</span>
+          <span>HABITUAL: 24% (Core)</span>
+        </div>
+      </Section>
+    );
+
+    const Structural = () => (
+      <Section id="structural">
+        <SectionHeader num="04" title="STRUCTURAL GAP" subtitle="Supply-Demand Deviation." />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-8">
+                 <ChromePanel figureId="4.1">
+                    <DeviationChart />
+                 </ChromePanel>
+            </div>
+            <div className="lg:col-span-4 flex flex-col justify-center p-6 border border-white/10 bg-black/40">
+                <h4 className="text-accent-gold font-mono text-xs uppercase mb-4 pb-2 border-b border-white/10">Utility Deficit</h4>
+                <p className="font-mono text-xs text-gray-400 leading-loose mb-6">
+                    Aesthetics shows 45% surplus (over-design), while Utility suffers -68% deficit.
+                </p>
+                <div className="space-y-4">
+                   <div className="space-y-1">
+                       <div className="flex justify-between text-[10px] font-mono text-gray-500"><span>AESTHETICS</span><span className="text-accent-gold">+45%</span></div>
+                       <div className="w-full h-1 bg-gray-800"><div className="h-full bg-accent-gold w-[70%]"></div></div>
+                   </div>
+                   <div className="space-y-1">
+                       <div className="flex justify-between text-[10px] font-mono text-gray-500"><span>UTILITY</span><span className="text-accent-alert">-68%</span></div>
+                       <div className="w-full h-1 bg-gray-800"><div className="h-full bg-accent-alert w-[30%]"></div></div>
+                   </div>
+                </div>
+            </div>
+        </div>
+      </Section>
+    );
+
+    const Friction = () => (
+      <Section id="matrix" className="pb-32">
+        <SectionHeader num="05" title="FRICTION" subtitle="Sensory Diagnostics." />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+            <div>
+                <SensorStrip />
+                <div className="flex justify-between text-[9px] font-mono text-gray-500 mt-2 px-1 bg-white/5 py-1">
+                    <span>LIVE SENSORS</span>
+                    <span className="text-accent-alert animate-pulse">14 CRITICAL ALERTS</span>
+                </div>
+            </div>
+            <div className="space-y-6">
+                <div className="border-l-2 border-accent-alert pl-4">
+                    <h3 className="text-white font-bold mb-1">EXCLUSIONARY TEXTURES</h3>
+                    <p className="font-serif text-gray-400 italic">"It looks good on Xiaohongshu, but it hurts to walk on."</p>
+                </div>
+                <div className="font-mono text-xs text-gray-500 space-y-2">
+                    <p><strong className="text-white">ROUGHNESS (31%):</strong> Cobblestones increase fall risk for elderly.</p>
+                    <p><strong className="text-accent-cyan">GLARE (21%):</strong> Commercial lighting disrupts resident sleep.</p>
+                </div>
+            </div>
+        </div>
+      </Section>
+    );
+
+    const Credits = () => (
+      <section className="w-full bg-[#020202] py-24 px-6 md:px-16 border-t border-chrome-900 relative">
+         <div className="absolute top-0 left-12 w-[1px] h-full bg-white/5 hidden md:block"></div>
+         <div className="mb-20">
+            <h2 className="text-3xl font-bold tracking-widest text-white uppercase font-display">CREDITS</h2>
+         </div>
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 font-mono text-xs text-gray-400">
+            <div className="space-y-4">
+               <h3 className="text-accent-success uppercase tracking-widest text-[10px] mb-4">About</h3>
+               <p className="leading-relaxed">
+                 Reaearch quantifies how neighborhoods are being redesigned into visual consumption stages,where aesthetic over-design creates a severe utility deficit(-68%) and hostile textures displace community residents to serve transient, algorithmic traffic.
+               </p>
+            </div>
+            <div className="space-y-4">
+               <h3 className="text-accent-success uppercase tracking-widest text-[10px] mb-4">People</h3>
+               <div className="space-y-6">
+                   <div>
+                       <p className="text-white mb-1">Zijian Qiu - <span className="text-gray-500 italic">Principal Investigator</span></p>
+                   </div>
+                   <div>
+                       <p className="text-white mb-1">Weiting Xiong - <span className="text-gray-500 italic">Advisor</span></p>
+                       <p className="text-gray-500">Nanjing Forestry University</p>
+                   </div>
+               </div>
+            </div>
+            <div className="space-y-4">
+               <h3 className="text-accent-success uppercase tracking-widest text-[10px] mb-4">Output</h3>
+               <div className="space-y-6">
+                   <div><h4 className="text-accent-success mb-1">Full Research Report [PDF]</h4></div>
+                   <div><h4 className="text-accent-success mb-1">Project Repository [GitHub]</h4></div>
+               </div>
+            </div>
+         </div>
+      </section>
+    );
+
+    const App = () => {
+      const cursorRef = useRef(null);
+      useEffect(() => {
+        const cursor = cursorRef.current;
+        if (!cursor) return;
+        const move = (e) => { cursor.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`; };
+        const hoverOn = () => cursor.classList.add('hovered');
+        const hoverOff = () => cursor.classList.remove('hovered');
+        window.addEventListener('mousemove', move);
+        const targets = document.querySelectorAll('button, a, .glass-panel');
+        targets.forEach(el => { el.addEventListener('mouseenter', hoverOn); el.addEventListener('mouseleave', hoverOff); });
+        return () => {
+           window.removeEventListener('mousemove', move);
+           targets.forEach(el => { el.removeEventListener('mouseenter', hoverOn); el.removeEventListener('mouseleave', hoverOff); });
+        };
+      }, []);
+
+      return (
+        <main className="w-full min-h-screen relative selection:bg-accent-gold selection:text-black">
+          <div id="cursor" ref={cursorRef} className="hidden md:block"></div>
+          <LiquidBackground />
+          <div className="fixed inset-0 grid-bg pointer-events-none z-0 opacity-40"></div>
+          
+          <Cover />
+          <Thesis />
+          <Morphology />
+          <Temporal />
+          <Structural />
+          <Friction />
+          <Credits />
+
+          <div className="fixed right-6 top-1/2 -translate-y-1/2 hidden md:flex flex-col gap-4 z-50 mix-blend-difference">
+             {['01', '02', '03', '04', '05'].map((label, i) => (
+               <div key={i} className="group flex items-center gap-2 justify-end cursor-pointer">
+                 <span className="font-mono text-[9px] text-accent-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300">SEC.{label}</span>
+                 <div className="w-0.5 h-6 bg-white/20 group-hover:bg-accent-gold transition-all"></div>
+               </div>
+             ))}
+          </div>
+        </main>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

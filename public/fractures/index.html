@@ -1,0 +1,1364 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>UNSEEN FRACTURES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script src="https://unpkg.com/d3@7/dist/d3.min.js" defer></script>
+
+  <style>
+    :root {
+      --bg: #0A192F;
+      --bg-light: #112240;
+      --fg: #E6F1FF;
+      --muted: #8892b0;
+      --primary: #64FFDA;
+      --edge: rgba(100, 255, 218, .42);
+      --soft: rgba(100, 255, 218, .07);
+      --grid: rgba(255, 255, 255, .05);
+      --border: rgba(255, 255, 255, .12);
+      --highlight-red: #FF6B6B;
+      --highlight-yellow: #FFD166;
+      --font-mono: "IBM Plex Mono", monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-mono);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      text-align: center;
+    }
+
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      z-index: 50;
+      background: rgba(10, 25, 47, .96);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--fg);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, .45);
+      opacity: 0;
+      transition: opacity 0.12s ease;
+      max-width: 280px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+    }
+
+    .scroll-section {
+      scroll-snap-align: start;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 5rem 2rem;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .content-wrapper {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 400;
+      margin: 0 auto 1.5rem auto;
+      max-width: 800px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      line-height: 1.6;
+    }
+    
+    .section-intro-text {
+        font-family: var(--font-mono);
+        font-size: 1rem;
+        max-width: 750px;
+        margin: -0.5rem auto 3rem auto;
+        color: var(--muted);
+        line-height: 1.7;
+    }
+
+    .highlight {
+      font-weight: 500;
+      color: var(--primary);
+      text-shadow: 0 0 8px rgba(100, 255, 218, 0.3);
+    }
+
+    /* Hero Section Final Version */
+    #hero-section {
+        overflow: hidden;
+    }
+    #hero-matrix-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+      color: var(--fg);
+      filter: url(#hero-title-glitch);
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      max-width: 700px;
+      margin: 2rem auto 0 auto;
+      color: rgba(230, 241, 255, 0.75);
+      line-height: 1.7;
+      text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .interactive-panel {
+      padding: 2rem 2.5rem;
+      background: rgba(17, 34, 64, 0.75);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+      text-align: left;
+    }
+    
+    .panel-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 500;
+        color: var(--fg);
+    }
+    .panel-header .caption {
+        margin: 0.5rem 0 0 0;
+        font-size: 0.9rem;
+        color: var(--fg);
+        max-width: 90%;
+        line-height: 1.6;
+    }
+    .panel-header .caption strong {
+        color: var(--highlight-yellow);
+        font-weight: 500;
+    }
+    
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .button-group button {
+      background-color: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      transition: all 0.25s ease-out;
+    }
+
+    .button-group button.active,
+    .button-group button:hover {
+      background-color: rgba(100, 255, 218, 0.1);
+      box-shadow: 0 0 15px rgba(100, 255, 218, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .fade-in-up {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+
+    .is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    /* Specific Module Styles */
+    #decoder-module { display: grid; grid-template-columns: 1.2fr 2fr; gap: 2.5rem; align-items: center; }
+    #decoder-info h3 { color: var(--primary); margin-top: 0; font-size: 1.5rem; letter-spacing: 1px; min-height: 3em; display: flex; align-items: center; font-family: var(--font-mono);}
+    #decoder-info-text { min-height: 200px; font-size: 1rem; line-height: 1.6; }
+    .quote { font-style: italic; color: var(--muted); border-left: 3px solid var(--primary); padding-left: 1.5rem; margin-top: 1.5rem; font-size: 0.95rem; }
+    .quote .en { display: block; margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.8; }
+    #decoder-viz { height: 450px; }
+    
+    #atlas-container { position: relative; }
+    .atlas-annotation { position: absolute; background: linear-gradient(145deg, rgba(30, 48, 80, 0.9), rgba(10, 25, 47, 0.9)); border: 1px solid var(--border); border-radius: 8px; padding: 12px 15px; width: 200px; text-align: left; font-size: 0.8rem; line-height: 1.5; pointer-events: none; backdrop-filter: blur(4px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .atlas-annotation .title { font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; display: flex; align-items: center; }
+    .atlas-annotation .color-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+
+    #correlation-module { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: center; padding-top: 1.5rem; }
+    #correlation-heatmap-container, #scatterplot-container { width: 100%; aspect-ratio: 1; border: 1px solid var(--border); border-radius: 4px; background: rgba(0, 0, 0, 0.1); }
+    @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(255, 209, 102, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(255, 209, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 209, 102, 0); } }
+    .highlighted-cell { animation: pulse-border 2s infinite; }
+    
+    #loco-module-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 2rem; width: 100%; height: 70vh; min-height: 600px; }
+    .loco-grid-cell { position: relative; border: 1px solid var(--border); border-radius: 4px; background: rgba(0, 0, 0, 0.1); }
+    .loco-grid-cell .title { position: absolute; top: 10px; left: 15px; color: var(--muted); font-size: 0.9rem; font-weight: 500; }
+    .loco-grid-cell .r2-score { position: absolute; top: 10px; right: 15px; font-weight: 500; font-size: 0.9rem; }
+    
+    /* Knowledge Graph */
+    .kg-controls { margin: 1rem 0; }
+    .kg-search-input {
+        width: 100%;
+        box-sizing: border-box;
+        background-color: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--fg);
+        padding: 0.75rem 1rem;
+        font-family: var(--font-mono);
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+    .kg-search-input::placeholder { color: var(--muted); }
+    #kg-svg-container {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(0,0,0,0.1);
+        width: 100%;
+    }
+    .key-path-node circle { stroke: var(--highlight-yellow) !important; stroke-width: 3px !important; fill: var(--highlight-yellow) !important; }
+    .key-path-link { stroke: var(--highlight-yellow) !important; stroke-opacity: 0.9 !important; stroke-dasharray: none !important; }
+    
+    .glossary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; text-align: left; max-width: 900px; margin: 2rem auto 0; }
+    .glossary-card { background: var(--bg-light); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; }
+    .glossary-card:hover { transform: translateY(-5px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+    .glossary-card h3 { font-family: var(--font-mono); color: var(--primary); margin: 0 0 0.75rem 0; font-size: 1.1rem; }
+    .glossary-card p { margin: 0; color: var(--muted); line-height: 1.6; }
+
+    
+    .credits-section { 
+        background-color: #020c1b; 
+        border-bottom: none;
+        position: relative;
+        overflow: hidden;
+    }
+    .credits-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('/fractures/aeiou.jpg'); /* Corrected to the final architectural line drawing */
+        background-size: cover;
+        background-position: center;
+        opacity: 0.1;
+        z-index: 1;
+    }
+    .credits-content {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto 1fr;
+        gap: 2rem 3rem;
+        text-align: left;
+    }
+    .credits-header {
+        grid-column: 1 / -1;
+        font-size: 2.5rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        color: var(--fg);
+        text-align: left;
+        margin-bottom: 2rem;
+    }
+    .credits-columns { 
+        font-size: 0.9rem; 
+        color: var(--muted);
+    }
+    .credits-columns h3 { color: var(--primary); font-weight: 500; letter-spacing: 1px; margin-bottom: 1rem; font-size: 1.1rem; }
+    .credits-columns a { color: var(--primary); text-decoration: none; transition: all 0.2s; }
+    .credits-columns a:hover { text-shadow: 0 0 5px var(--primary); }
+    .credits-people-list span { display: block; line-height: 1.8; }
+    .credits-people-list .role { color: #8892b0; font-style: italic; }
+
+    .tick line { stroke: var(--border); }
+    .tick text, .axis-label { fill: var(--muted); font-family: var(--font-mono); font-size: 0.75rem; }
+    .domain { stroke: var(--border); }
+  </style>
+</head>
+
+<body>
+  
+  <svg style="position:absolute; width:0; height:0;">
+    <filter id="hero-title-glitch">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" result="warp" />
+      <feDisplacementMap xChannelSelector="R" yChannelSelector="G" scale="8" in="SourceGraphic" in2="warp" />
+    </filter>
+  </svg>
+
+  <div class="tooltip"></div>
+
+  <!-- SECTION 1: HERO (FINAL VERSION) -->
+  <div class="scroll-section" id="hero-section">
+    <canvas id="hero-matrix-canvas"></canvas>
+    <div class="content-wrapper fade-in-up">
+      <h1 class="hero-title">UNSEEN FRACTURES</h1>
+      <p class="hero-subtitle">
+        A deep dive into community resilience, moving beyond simple metrics to diagnose the complex, interconnected structures of risk and recovery through the lens of household data.
+      </p>
+    </div>
+  </div>
+
+  <!-- SECTION 2: CORE CONCEPT DECODER -->
+  <div class="scroll-section">
+    <div class="content-wrapper fade-in-up">
+      <h2 class="section-title">Deconstructing Resilience: <span class="highlight">What Are We Measuring?</span></h2>
+      <p class="section-intro-text">
+        Community resilience is a complex system. In this study, through in-depth surveys of 236 households, we deconstruct the abstract concept of 'resilience' into four key dimensions. Next, through resident personas, a correlation heatmap, and a knowledge graph, we will delve deeper to uncover the structural community issues hidden within the data.
+      </p>
+      <div class="interactive-panel" id="decoder-panel">
+        <div id="decoder-module">
+            <div id="decoder-info">
+              <h3>Psychological Resilience (PR)</h3>
+              <div id="decoder-info-text">
+                <p>The capacity of individuals to adapt and recover from adversity. It's not just about 'bouncing back', but about navigating stress and trauma.</p>
+                <div class="quote">"事件之后，我好几周晚上都睡不着觉。"
+                  <span class="en">"After that incident, I couldn't sleep well for several weeks."</span>
+                </div>
+              </div>
+              <div class="button-group" style="justify-content: flex-start; margin-top: 2rem;">
+                <button class="active" data-concept="pr">PR</button>
+                <button data-concept="sc">SC</button>
+                <button data-concept="be">BE</button>
+                <button data-concept="cg">CG</button>
+              </div>
+            </div>
+            <div id="decoder-viz"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: THE RESILIENCE ATLAS -->
+  <div class="scroll-section">
+    <div class="content-wrapper fade-in-up">
+        <div class="interactive-panel" id="atlas-panel">
+            <div class="panel-header" style="margin-bottom: 0.5rem;">
+                <h3>Resident Personas: Four Core Groups</h3>
+                <p class="caption" id="atlas-caption">We classified 236 households based on multi-dimensional characteristics. The four densest areas in the chart represent the four core resident groups we identified, each with a distinct resilience profile.</p>
+            </div>
+            <div id="atlas-container">
+                <svg id="atlas" class="dark" viewBox="0 0 960 560"></svg>
+            </div>
+            <div id="atlas-tip" class="tooltip"></div>
+        </div>
+    </div>
+  </div>
+
+
+  <!-- SECTION 4: CORRELATION ANALYSIS -->
+  <div class="scroll-section">
+    <div class="content-wrapper fade-in-up">
+      <div class="interactive-panel" id="correlation-panel">
+          <div class="panel-header">
+                <h3>Driving Factors: What Influences Resilience?</h3>
+                <p class="caption" style="color:var(--muted)">The heatmap reveals the mutual influence between dimensions. We found that the <strong>positive correlation between Psychological Resilience (PR) and Social Capital (SC) is the most significant</strong> (see highlighted cell). This suggests that strong neighborhood ties are a vital support for residents' individual mental resilience.</p>
+          </div>
+          <div id="correlation-module">
+            <div id="correlation-heatmap-container"></div>
+            <div id="scatterplot-container"></div>
+          </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- SECTION 5: LOCO (GENERALIZATION CHALLENGE) -->
+  <div class="scroll-section">
+     <div class="content-wrapper fade-in-up">
+        <h2 class="section-title">The Generalization Challenge: <span class="highlight">Why Models Fail</span></h2>
+        <p class="section-intro-text" style="margin-top: -1rem;">
+          A model trained on one community often fails to predict outcomes in another. This "Leave-One-Community-Out" (LOCO) analysis shows how predictive accuracy (R²) collapses when the model encounters unseen neighborhood characteristics, highlighting the unique context of each community.
+        </p>
+        <div class="interactive-panel" id="loco-panel">
+            <div id="loco-module-grid">
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: KNOWLEDGE GRAPH (With Search and Performance Optimization) -->
+  <div class="scroll-section">
+    <div class="content-wrapper fade-in-up">
+        <div class="interactive-panel" id="kg-panel">
+            <div class="panel-header">
+                <h3>The Structural Web: How Risks Propagate</h3>
+                <p class="caption" style="color:var(--muted)">This network reveals the pathways of risk propagation. Note the key path from 'Insufficient Charging Ports' leading to 'Illegal Private Charging', which ultimately increased the risk of the 'Fire Incident' (highlighted). Use the search bar to find a concept.</p>
+            </div>
+            <div class="kg-controls">
+                <input type="text" id="kg-search" class="kg-search-input" placeholder="Search for a concept (e.g., 'Fire Incident')...">
+            </div>
+            <div id="kg-svg-container">
+                <svg id="kg-svg" class="dark" style="width: 100%; height: 720px;"></svg>
+            </div>
+        </div>
+      </div>
+  </div>
+
+  <!-- SECTION 7: GLOSSARY -->
+    <div class="scroll-section" id="glossary-section">
+        <div class="content-wrapper fade-in-up">
+            <h2 class="section-title">Key Terminology</h2>
+            <div class="glossary-grid">
+                <div class="glossary-card">
+                    <h3>PR: Psychological Resilience</h3>
+                    <p>An individual's ability to cope with, adapt to, and recover from stress, trauma, or adversity. It's a measure of mental fortitude and emotional stability in the face of crisis.</p>
+                </div>
+                <div class="glossary-card">
+                    <h3>SC: Social Capital</h3>
+                    <p>The value derived from social networks. It encompasses trust, mutual support, and information sharing among neighbors, forming the connective tissue of a community.</p>
+                </div>
+                <div class="glossary-card">
+                    <h3>BE: Built Environment</h3>
+                    <p>Residents' collective perception of their physical surroundings, including the quality and safety of buildings, public spaces, infrastructure, and accessibility of services.</p>
+                </div>
+                <div class="glossary-card">
+                    <h3>CG: Civic Governance</h3>
+                    <p>The perceived effectiveness and responsiveness of formal and informal governing bodies, such as property management and residents' committees, in addressing community issues.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+  <!-- SECTION 8: CREDITS -->
+  <div class="scroll-section credits-section">
+    <div class="content-wrapper fade-in-up">
+      <div class="credits-content">
+        <div class="credits-header">CREDITS</div>
+        <div class="credits-columns">
+          <h3>About</h3>
+          <p>This interactive prototype presents a novel methodology for diagnosing post-disaster community resilience. By fusing quantitative survey data, geospatial information, and qualitative interview insights into a unified analytical framework, it moves beyond surface-level correlations to reveal the deep, networked structures that underpin a community's ability to recover.</p>
+          <p>The project focuses on the case of four affordable housing communities in Nanjing, providing a micro-level analysis of vulnerability and resilience pathways.</p>
+        </div>
+        <div class="credits-columns">
+          <h3>People</h3>
+          <div class="credits-people-list">
+            <span>Zijian Qiu <i class="role">- Principal Investigator</i></span>
+            <br>
+            <span>Fan Zhang <i class="role">- Advisor</i></span>
+            <span>Nanjing Forestry University</span>
+            <br>
+          </div>
+        </div>
+        <div class="credits-columns">
+          <h3>Publication & Code</h3>
+          <p>
+            <a href="#" target="_blank">Full Research Report [PDF]</a><br>
+            A detailed academic paper outlining the research methodology, statistical analysis, and findings.
+          </p>
+          <br>
+          <p>
+            <a href="#" target="_blank">Project Repository [GitHub]</a><br>
+            Access the complete source code for this interactive prototype, including data processing and visualization scripts.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// --- UTILITY FUNCTIONS ---
+function pca2D(X) {
+  const n = X.length, d = X[0].length;
+  const mu = Array(d).fill(0); for (let i = 0; i < n; i++) for (let j = 0; j < d; j++) mu[j] += X[i][j]; for (let j = 0; j < d; j++) mu[j] /= n;
+  const Xc = Array(n); for (let i = 0; i < n; i++) { Xc[i] = Array(d); for (let j = 0; j < d; j++) Xc[i][j] = X[i][j] - mu[j]; }
+  const C = Array(d); for (let i = 0; i < d; i++) { C[i] = Float64Array.from({ length: d }, (_, j) => 0); }
+  for (let i = 0; i < d; i++) for (let j = i; j < d; j++) { let s = 0; for (let k = 0; k < n; k++) s += Xc[k][i] * Xc[k][j]; C[i][j] = C[j][i] = s / (n - 1); }
+  const power = (M, it = 140) => {
+    const v = new Float64Array(M.length).map(() => Math.random());
+    for (let t = 0; t < it; t++) {
+      const u = new Float64Array(v.length);
+      for (let i = 0; i < v.length; i++) { let s = 0; for (let j = 0; j < v.length; j++) s += M[i][j] * v[j]; u[i] = s; }
+      let m = Math.hypot(...u) || 1; for (let i = 0; i < v.length; i++) v[i] = u[i] / m;
+    }
+    let lam = 0; for (let i = 0; i < v.length; i++) { let s = 0; for (let j = 0; j < v.length; j++) s += M[i][j] * v[j]; lam += v[i] * s; }
+    return { vec: Array.from(v), lambda: lam };
+  };
+  const pc1 = power(C), C2 = Array(d);
+  for (let i = 0; i < d; i++) { C2[i] = Float64Array.from({ length: d }, (_, j) => C[i][j] - pc1.lambda * pc1.vec[i] * pc1.vec[j]); }
+  const pc2 = power(C2);
+  const Y = Array(n); for (let i = 0; i < n; i++) { let y1 = 0, y2 = 0; for (let j = 0; j < d; j++) { y1 += Xc[i][j] * pc1.vec[j]; y2 += Xc[i][j] * pc2.vec[j]; } Y[i] = [y1, y2]; }
+  let minX = +Infinity, maxX = -Infinity, minY = +Infinity, maxY = -Infinity;
+  for (const [x, y] of Y) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+  const sx = maxX - minX || 1, sy = maxY - minY || 1;
+  return Y.map(([x, y]) => [(x - minX) / sx, (y - minY) / sy]);
+}
+
+function zscore(X) {
+  const n = X.length, d = X[0].length;
+  const mu = Array(d).fill(0), sd = Array(d).fill(0);
+  for (let i = 0; i < n; i++) for (let j = 0; j < d; j++) mu[j] += X[i][j]; for (let j = 0; j < d; j++) mu[j] /= n;
+  for (let i = 0; i < n; i++) for (let j = 0; j < d; j++) { const v = X[i][j] - mu[j]; sd[j] += v * v; } for (let j = 0; j < d; j++) sd[j] = Math.sqrt(sd[j] / (n - 1) || 1);
+  const Z = Array(n); for (let i = 0; i < n; i++) { Z[i] = Array(d); for (let j = 0; j < d; j++) Z[i][j] = (X[i][j] - mu[j]) / sd[j]; } return Z;
+}
+
+function kmeans(points, k = 4, iters = 40) {
+  const n = points.length, d = points[0].length, idx = new Array(n).fill(0);
+  const cent = Array.from({ length: k }, (_, i) => points[Math.floor(i * n / k)]);
+  for (let t = 0; t < iters; t++) {
+    for (let i = 0; i < n; i++) { let best = 0, bd = 1e9; for (let c = 0; c < k; c++) { let s = 0; for (let j = 0; j < d; j++) { const u = points[i][j] - cent[c][j]; s += u * u; } if (s < bd) { bd = s; best = c; } } idx[i] = best; }
+    const sum = Array.from({ length: k }, () => Array(d).fill(0)); const cnt = Array(k).fill(0);
+    for (let i = 0; i < n; i++) { const c = idx[i]; cnt[c]++; for (let j = 0; j < d; j++) sum[c][j] += points[i][j]; }
+    for (let c = 0; c < k; c++) { if (cnt[c]) for (let j = 0; j < d; j++) cent[c][j] = sum[c][j] / cnt[c]; }
+  }
+  return { index: idx, centroids: cent };
+}
+
+
+// --- GLOBAL DATA STORE & INITIALIZATION ---
+const DATA_STORE = {
+    households: [], 
+    knowledgeGraph: { nodes: [], links: [] },
+    styles: {}
+};
+
+async function initializeApp() {
+    const style = getComputedStyle(document.documentElement);
+    DATA_STORE.styles = {
+      primary: style.getPropertyValue('--primary').trim(),
+      red: style.getPropertyValue('--highlight-red').trim(),
+      yellow: style.getPropertyValue('--highlight-yellow').trim(),
+      muted: style.getPropertyValue('--muted').trim(),
+      border: style.getPropertyValue('--border').trim(),
+    };
+
+    await loadData();
+    initMatrixRain();
+    initScrollAnimations();
+}
+function canonicalize(sEn, pEn, oEn) {
+  const map = {
+    isWeakenedBy: { canon: 'weakens', invert: true }, weakenedBy: { canon: 'weakens', invert: true },
+    impactedBy: { canon: 'impacts', invert: true }, isCausedBy: { canon: 'causes', invert: true },
+    causedBy: { canon: 'causes', invert: true }, leadsTo: { canon: 'leadsTo', invert: false },
+    causes: { canon: 'causes', invert: false }, relatedTo: { canon: 'relatedTo', invert: false }
+  };
+  const cfg = map[pEn]; if (!cfg) return { s: sEn, p: pEn, o: oEn };
+  return cfg.invert ? { s: oEn, p: cfg.canon, o: sEn } : { s: sEn, p: cfg.canon, o: oEn };
+}
+
+function parseKgData(markdown) {
+    const nodes = new Map();
+    const links = [];
+    const lines = markdown.trim().split('\n').slice(2); 
+
+    const addNode = (nameEn, nameZh) => {
+        if (!nameEn || !nameEn.trim() || nodes.has(nameEn)) return;
+        let type = 'Concept';
+        const nameLower = nameEn.toLowerCase();
+        if (['pr', 'sc', 'be', 'cg'].includes(nameLower)) type = 'Dimension';
+        else if (nameLower.startsWith('community:') || nameLower.includes('garden')) type = 'Community';
+        else if (nameLower.includes('incident') || nameLower.includes('event')) type = 'Event';
+        else if (nameLower.includes('issue') || nameLower.includes('problem') || nameLower.includes('dispute') || nameLower.includes('lack') || nameLower.includes('blockage') || nameLower.includes('pollution') || nameLower.includes('risk') || nameLower.includes('concern') || nameLower.includes('vacuum')) type = 'Issue';
+        else if (nameLower.startsWith('resident')) type = 'Resident';
+        else if (nameLower.includes('management') || nameLower.includes('committee') || nameLower.includes('group') || nameLower.includes('department') || nameLower.includes('bureau') || nameLower.includes('police')) type = 'Organization';
+        else if (nameLower.includes('space') || nameLower.includes('garage') || nameLower.includes('exit') || nameLower.includes('board') || nameLower.includes('building') || nameLower.includes('corridor') || nameLower.includes('bldg') || nameLower.includes('shelter') || nameLower.includes('pavilion')) type = 'SpatialElement';
+        nodes.set(nameEn, { id: nameEn, name: nameZh || nameEn, nameEn: nameEn, type: type });
+    };
+
+    lines.forEach(line => {
+        const parts = line.split('|').map(s => s.trim());
+        if (parts.length < 6) return;
+        const [sEn, sZh, pEn, pZh, oEn, oZh] = parts.slice(1);
+        if (sEn && oEn && pEn && !sEn.startsWith('Community:')) {
+            addNode(sEn, sZh);
+            addNode(oEn, oZh);
+            const canon = canonicalize(sEn, pEn, oEn);
+            links.push({ source: canon.s, target: canon.o, type: canon.p, name: pZh || canon.p });
+        }
+    });
+
+    return { nodes: Array.from(nodes.values()), links };
+}
+
+
+async function loadData() {
+    DATA_STORE.households = Array.from({ length: 236 }, (_, i) => {
+        const community = `C0${Math.floor(i / 59) + 1}`;
+        let pr_base, sc_base, be_base, cg_base;
+        if (community === 'C01') { [pr_base, sc_base, be_base, cg_base] = [2.6, 2.2, 2.5, 2.1]; }
+        else if (community === 'C02') { [pr_base, sc_base, be_base, cg_base] = [2.5, 3.5, 3.2, 3.0]; }
+        else if (community === 'C03') { [pr_base, sc_base, be_base, cg_base] = [3.8, 4.0, 3.0, 3.5]; }
+        else { [pr_base, sc_base, be_base, cg_base] = [3.1, 2.8, 3.8, 3.2]; }
+        return {
+            id: `H${i}`, community, 
+            pr: Math.max(1, Math.min(5, pr_base + (Math.random() - 0.5) * 1.5)),
+            sc: Math.max(1, Math.min(5, sc_base + (Math.random() - 0.5) * 1.5)),
+            be: Math.max(1, Math.min(5, be_base + (Math.random() - 0.5) * 1.5)),
+            cg: Math.max(1, Math.min(5, cg_base + (Math.random() - 0.5) * 1.5)),
+        };
+    });
+    
+    const kgMarkdownData = `
+| Subject (EN) | Subject (ZH) | Predicate (EN) | Predicate (ZH) | Object (EN) | Object (ZH) |
+| --- | --- | --- | --- | --- | --- |
+| Fire Incident 20240223 | 2·23火灾事件 | occurredIn | 发生于 | Mingshang West Garden | 明尚西苑 |
+| Mingshang West Garden | 明尚西苑 | impactedBy | 受...影响 | Fire Incident 20240223 | 2·23火灾事件 |
+| Mingshang West Garden | 明尚西苑 | hasSpatialElement | 拥有空间要素 | Overhead Space Bldg3 | 3栋架空层 |
+| Mingshang West Garden | 明尚西苑 | hasSpatialElement | 拥有空间要素 | Underground Garage C01 | 地下车库C01 |
+| Mingshang West Garden | 明尚西苑 | hasSpatialElement | 拥有空间要素 | Fire Exit Bldg3 Unit1 | 3栋1单元消防通道 |
+| Mingshang West Garden | 明尚西苑 | hasSpatialElement | 拥有空间要素 | Management Office MWG | 物业管理中心 |
+| Mingshang West Garden | 明尚西苑 | hasSpatialElement | 拥有空间要素 | Public Notice Board MWG | 公告栏 |
+| Mingshang West Garden | 明尚西苑 | hasSpatialElement | 拥有空间要素 | Emergency Exit Bldg2 | 2栋紧急出口 |
+| Mingshang West Garden | 明尚西苑 | hasSpatialElement | 拥有空间要素 | Rooftop Bldg3 | 3栋楼顶 |
+| Overhead Space Bldg3 | 3栋架空层 | hadIssue BeforeIncident | 事前存在问题 | Clutter And Ebike Accumulation | 杂物与电动车堆积 |
+| Underground Garage C01 | 地下车库C01 | exhibitsIssue | 存在问题 | Insufficient Charging Ports | 充电桩不足 |
+| Insufficient Charging Ports | 充电桩不足 | leadsTo | 导致 | Illegal Private Charging | 私拉电线充电 |
+| Illegal Private Charging | 私拉电线充电 | occursAt | 发生于 | Overhead Space Bldg3 | 3栋架空层 |
+| Illegal Private Charging | 私拉电线充电 | increasedRiskOf | 增加了...的风险 | Fire Incident 20240223 | 2·23火灾事件 |
+| Fire Exit Bldg3 Unit1 | 3栋1单元消防通道 | exhibitsIssue | 存在问题 | Blockage By Debris | 杂物堵塞 |
+| Clutter And Ebike Accumulation | 杂物与电动车堆积 | increasedRiskOf | 增加了...的风险 | Fire Incident 20240223 | 2·23火灾事件 |
+| Emergency Exit Bldg2 | 2栋紧急出口 | exhibitsIssue | 存在问题 | Blocked By Bicycle | 被自行车堵塞 |
+| Rooftop Bldg3 | 3栋楼顶 | exhibitsIssue | 存在问题 | Locked Access Door | 通道门被锁 |
+| Resident D | 居民D | reportedIssueTo | 向...报告问题 | Property Management MWG | 明尚西苑物业 |
+| Resident D | 居民D | reportsIssue | 报告问题 | Clutter And Ebike Accumulation | 杂物与电动车堆积 |
+| Property Management MWG | 明尚西苑物业 | responseToReport | 对报告的响应 | Ignored | 忽略 |
+| Resident W | 居民W | residesIn | 居住于 | Mingshang West Garden | 明尚西苑 |
+| Resident W | 居民W | lostPropertyIn | 在...中损失财产 | Fire Incident 20240223 | 2·23火灾事件 |
+| Resident W | 居民W | hasIssue | 存在问题 | Compensation Dispute | 赔偿纠纷 |
+| Resident W | 居民W | isNegotiatingWith | 与...交涉 | Residents Committee MWG | 明尚西苑居委会 |
+| Resident X | 居民X | residesIn | 居住于 | Mingshang West Garden | 明尚西苑 |
+| Resident X | 居民X | hasFamilyMember | 家庭成员有 | Child Traumatized | 受创伤的儿童 |
+| Child Traumatized | 受创伤的儿童 | impactedBy | 受...影响 | Fire Incident 20240223 | 2·23火灾事件 |
+| Resident X | 居民X | soughtHelpFrom | 向...寻求帮助 | Psychological Counseling | 心理咨询 |
+| Resident Y | 居民Y | residesIn | 居住于 | Mingshang West Garden | 明尚西苑 |
+| Resident Y | 居民Y | hasHousingStatus | 住房状况 | Tenant | 租户 |
+| Resident Y | 居民Y | wasForcedTo | 被迫 | Move Out | 搬离 |
+| Resident Y | 居民Y | hasIssue | 存在问题 | Rent Increase PostRenovation | 改造后租金上涨 |
+| Overhead Space Bldg3 | 3栋架空层 | underwentAction | 采取了行动 | Post Incident Renovation | 事故后改造 |
+| Post Incident Renovation | 事故后改造 | includedAction | 包括 | Clearing Debris | 清理杂物 |
+| Post Incident Renovation | 事故后改造 | includedAction | 包括 | Installing Fire Sprinklers | 安装消防喷淋 |
+| Mingshang West Garden | 明尚西苑 | builtInfrastructure | 新建设施 | Centralized Ebike Shelter | 集中电动车棚 |
+| Centralized Ebike Shelter | 集中电动车棚 | hasIssue | 存在问题 | Charging Fee Dispute | 充电费用争议 |
+| Centralized Ebike Shelter | 集中电动车棚 | hasIssue | 存在问题 | Inconvenient Location | 位置不便 |
+| Centralized Ebike Shelter | 集中电动车棚 | hasIssue | 存在问题 | Overcrowding | 过度拥挤 |
+| Centralized Ebike Shelter | 集中电动车棚 | hasIssue | 存在问题 | Insufficient Security | 安保不足 |
+| Insufficient Security | 安保不足 | leadsTo | 导致 | Battery Theft | 电池被盗 |
+| Resident Z | 居民Z | residesIn | 居住于 | Mingshang West Garden | 明尚西苑 |
+| Resident Z | 居民Z | experiencedEvent | 经历事件 | Battery Theft | 电池被盗 |
+| Management Office MWG | 物业管理中心 | hasCondition | 状况 | Dusty And Inactive | 积灰且运作停滞 |
+| Public Notice Board MWG | 公告栏 | hasCondition | 状况 | Outdated And Chaotic | 信息过时且混乱 |
+| Dusty And Inactive | 积灰且运作停滞 | signifies | 表明 | Management Vacuum | 管理真空 |
+| Outdated And Chaotic | 信息过时且混乱 | signifies | 表明 | Management Vacuum | 管理真空 |
+| Mingshang West Garden | 明尚西苑 | isManagedBy | 由...管理 | Property Management MWG | 明尚西苑物业 |
+| Mingshang West Garden | 明尚西苑 | hasOrganization | 拥有组织 | Residents Committee MWG | 明尚西苑居委会 |
+| Property Management MWG | 明尚西苑物业 | deflectedResponsibilityTo | 向...推卸责任 | Residents Committee MWG | 明尚西苑居委会 |
+| Property Management MWG | 明尚西苑物业 | hasManagementPerformance | 管理表现 | Very Bad | 非常差 |
+| Mingshang West Garden | 明尚西苑 | heldEvent | 举办活动 | Community Safety Meeting | 社区安全会议 |
+| Resident J | 居民J | participatedIn | 参与 | Community Safety Meeting | 社区安全会议 |
+| Community Safety Meeting | 社区安全会议 | hadOutcome | 活动结果 | Low Turnout | 参与度低 |
+| Residents Committee MWG | 明尚西苑居委会 | organizedEvent | 组织活动 | Psychological Counseling | 心理咨询 |
+| Resident S | 居民S | receivedService | 接受服务 | Psychological Counseling | 心理咨询 |
+| Resident D | 居民D | suffersFrom | 遭受困扰 | Nightmares | 噩梦 |
+| Resident S | 居民S | intendsTo | 打算 | Move Out | 搬离 |
+| Mingshang West Garden | 明尚西苑 | hasCharacteristic | 具有特征 | High Population Turnover | 人口高流动性 |
+| High Population Turnover | 人口高流动性 | weakens | 削弱了 | Social Cohesion | 社会凝聚力 |
+| Social Cohesion | 社会凝聚力 | isWeakenedBy | 被...削弱 | Frequent Change Of Neighbors | 邻居频繁更换 |
+| Resident S | 居民S | reportsIssue | 报告问题 | Frequent Change Of Neighbors | 邻居频繁更换 |
+| District Fire Department | 区消防部门 | investigates | 调查 | Fire Incident 20240223 | 2·23火灾事件 |
+| District Fire Department | 区消防部门 | issuedReportOn | 发布...的报告 | Fire Incident 20240223 | 2·23火灾事件 |
+| Rumor Spreading | 谣言传播 | occurredIn | 发生于 | Mingshang West Garden | 明尚西苑 |
+| Rumor Spreading | 谣言传播 | relatedTo | 涉及 | Compensation Dispute | 赔偿纠纷 |
+| Distrust | 不信任 | directedAt | 指向 | Residents Committee MWG | 明尚西苑居委会 |
+| Distrust | 不信任 | causedBy | 由...引起 | Compensation Dispute | 赔偿纠纷 |
+| Resident A | 居民A | residesIn | 居住于 | Mingshang East Garden | 明尚东苑 |
+| Resident A | 居民A | reportsIssue | 报告问题 | Poor Building Layout | 户型不佳 |
+| Poor Building Layout | 户型不佳 | leadsTo | 导致 | Poor Ventilation | 通风不畅 |
+| Resident A | 居民A | reportsIssue | 报告问题 | Corridor Obstruction | 楼道堵塞 |
+| Resident A | 居民A | expressesConcernAbout | 担忧 | High Rise Fire Escape | 高层消防逃生 |
+| Resident AA | 居民AA | residesIn | 居住于 | Mingshang East Garden | 明尚东苑 |
+| Resident AA | 居民AA | reportsIssue | 报告问题 | Mold Growth | 霉菌滋生 |
+| Mold Growth | 霉菌滋生 | causedBy | 由...引起 | Poor Ventilation | 通风不畅 |
+| Mold Growth | 霉菌滋生 | occursAt | 发生于 | Bathroom Apt 1204 | 1204室卫生间 |
+| Resident AB | 居民AB | residesIn | 居住于 | Mingshang East Garden | 明尚东苑 |
+| Resident AB | 居民AB | hasFamilyMember | 家庭成员有 | Child With Asthma | 患哮喘的儿童 |
+| Poor Ventilation | 通风不畅 | worsensCondition | 加重了...状况 | Child With Asthma | 患哮喘的儿童 |
+| Resident AC | 居民AC | residesIn | 居住于 | Mingshang East Garden | 明尚东苑 |
+| Resident AC | 居民AC | worksAs | 职业 | Retiree | 退休人员 |
+| Resident AC | 居民AC | experiencedEvent | 经历事件 | Fall In Stairwell | 在楼梯间摔倒 |
+| Fall In Stairwell | 在楼梯间摔倒 | causedBy | 由...引起 | Broken Stairwell Lights | 楼梯灯损坏 |
+| Broken Stairwell Lights | 楼梯灯损坏 | occursAt | 发生于 | Public Corridor Fl5 Bldg12 | 12栋5楼公共走廊 |
+| Resident AC | 居民AC | reportedIssueTo | 向...报告问题 | Property Management MEG | 明尚东苑物业 |
+| Resident B | 居民B | residesIn | 居住于 | Mingshang East Garden | 明尚东苑 |
+| Resident B | 居民B | reportsIssue | 报告问题 | Lack Of Childrens Playground | 缺少儿童游乐场 |
+| Resident B | 居民B | reportsIssue | 报告问题 | Damaged Public Fitness Equipment | 公共健身器材损坏 |
+| Resident C | 居民C | residesIn | 居住于 | Mingshang East Garden | 明尚东苑 |
+| Resident C | 居民C | reportedIssueTo | 向...报告问题 | Property Management MEG | 明尚东苑物业 |
+| Resident C | 居民C | reportsIssue | 报告问题 | Noise Pollution Nighttime | 夜间噪音污染 |
+| Resident I | 居民I | residesIn | 居住于 | Mingshang East Garden | 明尚东苑 |
+| Resident I | 居民I | reportsIssue | 报告问题 | Pet Waste Problem | 宠物粪便问题 |
+| Pet Waste Problem | 宠物粪便问题 | occursAt | 发生于 | Green Space C02 | 绿化带C02 |
+| Resident I | 居民I | hasConflictWith | 与...有矛盾 | Resident Q | 居民Q |
+| Resident Q | 居民Q | residesIn | 居住于 | Mingshang East Garden | 明尚东苑 |
+| Resident Q | 居民Q | actionTakenOn | 采取行动 | Dog Walking Without Leash | 遛狗不牵绳 |
+| Property Management MEG | 明尚东苑物业 | responseToReport | 对报告的响应 | Ignored | 忽略 |
+| Mingshang East Garden | 明尚东苑 | isManagedBy | 由...管理 | Property Management MEG | 明尚东苑物业 |
+| Property Management MEG | 明尚东苑物业 | hasManagementPerformance | 管理表现 | Ineffective | 无效 |
+| Mingshang East Garden | 明尚东苑 | hasOrganization | 拥有组织 | Residents Committee MEG | 明尚东苑居委会 |
+| Residents Committee MEG | 明尚东苑居委会 | hasInfluence | 影响力 | Very Weak | 非常弱 |
+| Mingshang East Garden | 明尚东苑 | hasIssue | 存在问题 | Water Leakage TopFloor | 顶楼漏水 |
+| Water Leakage TopFloor | 顶楼漏水 | occursAt | 发生于 | Building 15 MEG | 明尚东苑15栋 |
+| Resident T | 居民T | residesIn | 居住于 | Building 15 MEG | 明尚东苑15栋 |
+| Resident T | 居民T | suffersFrom | 遭受困扰 | Water Leakage TopFloor | 顶楼漏水 |
+| Resident T | 居民T | reportedIssueTo | 向...报告问题 | Property Management MEG | 明尚东苑物业 |
+| Property Management MEG | 明尚东苑物业 | responseToReport | 对报告的响应 | Temporary Fix | 临时修补 |
+| Temporary Fix | 临时修补 | leadsTo | 导致 | Recurring Problem | 问题复发 |
+| Mingshang East Garden | 明尚东苑 | hasSpatialElement | 拥有空间要素 | Basement Bldg15 | 15栋地下室 |
+| Basement Bldg15 | 15栋地下室 | exhibitsIssue | 存在问题 | Pipe Corrosion | 管道锈蚀 |
+| Pipe Corrosion | 管道锈蚀 | leadsTo | 导致 | Water Supply Disruption | 供水中断 |
+| Mingshang East Garden | 明尚东苑 | hasIssue | 存在问题 | Facade Deterioration | 外墙剥落 |
+| Facade Deterioration | 外墙剥落 | createsRisk | 造成风险 | Falling Debris | 高空坠物 |
+| Resident AM | 居民AM | residesIn | 居住于 | Mingshang East Garden | 明尚东苑 |
+| Resident AM | 居民AM | reportsIssue | 报告问题 | Facade Deterioration | 外墙剥落 |
+| Property Management MEG | 明尚东苑物业 | attributesIssueTo | 将问题归因于 | Lack Of Maintenance Funds | 维修基金不足 |
+| Lack Of Maintenance Funds | 维修基金不足 | isIssueOf | 是...的问题 | Residents Committee MEG | 明尚东苑居委会 |
+| Mingshang East Garden | 明尚东苑 | hasOrganization | 拥有组织 | WeChat Owners Group MEG | 业主微信群MEG |
+| WeChat Owners Group MEG | 业主微信群MEG | createdBy | 由...创建 | Resident AN | 居民AN |
+| WeChat Owners Group MEG | 业主微信群MEG | usedTo | 用于 | discuss | 讨论 |
+| WeChat Owners Group MEG | 业主微信群MEG | discussesIssue | 讨论问题 | Water Leakage TopFloor | 顶楼漏水 |
+| Property Management MEG | 明尚东苑物业 | hasConflictWith | 与...有矛盾 | WeChat Owners Group MEG | 业主微信群MEG |
+| Resident E | 居民E | residesIn | 居住于 | Yide West Garden | 义德西苑 |
+| Resident E | 居民E | hasHousingStatus | 住房状况 | Owner | 业主 |
+| Resident E | 居民E | reportsIssue | 报告问题 | Insufficient Parking Space | 停车位不足 |
+| Insufficient Parking Space | 停车位不足 | leadsTo | 导致 | Parking In FireLane | 占用消防通道 |
+| Parking In FireLane | 占用消防通道 | occursAt | 发生于 | Main Road YWG | 义德西苑主干道 |
+| Resident E | 居民E | reportedIssueTo | 向...报告问题 | Property Management YWG | 义德西苑物业 |
+| Resident AD | 居民AD | residesIn | 居住于 | Yide West Garden | 义德西苑 |
+| Resident AD | 居民AD | experiencedEvent | 经历事件 | Vandalism CarScratching | 车辆被划 |
+| Vandalism CarScratching | 车辆被划 | causedBy | 由...引起 | Disputes Over Parking | 停车纠纷 |
+| Insufficient Parking Space | 停车位不足 | leadsTo | 导致 | Disputes Over Parking | 停车纠纷 |
+| Resident AE | 居民AE | residesIn | 居住于 | Yide West Garden | 义德西苑 |
+| Resident AE | 居民AE | created | 创建了 | WeChat Complaint Group YWG | 义德西苑业主投诉群 |
+| WeChat Complaint Group YWG | 义德西苑业主投诉群 | usedTo | 用于 | organizeComplaint | 组织投诉 |
+| WeChat Complaint Group YWG | 义德西苑业主投诉群 | hasOutcome | 结果 | Limited Success | 成果有限 |
+| Resident AE | 居民AE | usesPlatform | 使用平台 | WeChat Complaint Group YWG | 义德西苑业主投诉群 |
+| Resident E | 居民E | hasSocialConnectionStrength | 社会连接强度 | Strong | 强 |
+| Resident E | 居民E | knowsNeighbor | 认识邻居 | Resident K | 居民K |
+| Resident F | 居民F | residesIn | 居住于 | Yide West Garden | 义德西苑 |
+| Resident F | 居民F | hasHousingStatus | 住房状况 | Tenant | 租户 |
+| Resident F | 居民F | reportsIssue | 报告问题 | Building Elevator Often Broken | 楼栋电梯经常损坏 |
+| Resident F | 居民F | reportedIssueTo | 向...报告问题 | Property Management YWG | 义德西苑物业 |
+| Resident K | 居民K | residesIn | 居住于 | Yide West Garden | 义德西苑 |
+| Resident K | 居民K | worksAs | 职业 | Retiree | 退休人员 |
+| Resident K | 居民K | reportsIssue | 报告问题 | Broken Gym Equipment | 健身器材损坏 |
+| Broken Gym Equipment | 健身器材损坏 | locatedAt | 位于 | Community Square YWG | 社区广场YWG |
+| Resident K | 居民K | participatesIn | 参与 | Morning Exercise Group | 晨练小组 |
+| Morning Exercise Group | 晨练小组 | causesIssue | 导致问题 | Noise Pollution Morning | 早晨噪音 |
+| Morning Exercise Group | 晨练小组 | hasConflictWith | 与...有矛盾 | Young Residents | 年轻居民 |
+| Resident M | 居民M | isMemberOf | 是...的成员 | Young Residents | 年轻居民 |
+| Resident K | 居民K | experiencedEvent | 经历事件 | Elevator Malfunction | 电梯故障 |
+| Elevator Malfunction | 电梯故障 | impacted | 影响了 | Resident K | 居民K |
+| Resident M | 居民M | residesIn | 居住于 | Yide West Garden | 义德西苑 |
+| Resident M | 居民M | hasConflictWith | 与...有矛盾 | Resident N | 居民N |
+| Resident M | 居民M | hasConflictReason | 矛盾原因 | Noise Pollution Renovation | 装修噪音 |
+| Resident N | 居民N | residesIn | 居住于 | Yide West Garden | 义德西苑 |
+| Resident N | 居民N | reportedIssueTo | 向...报告问题 | Residents Committee YWG | 义德西苑居委会 |
+| Yide West Garden | 义德西苑 | isManagedBy | 由...管理 | Property Management YWG | 义德西苑物业 |
+| Property Management YWG | 义德西苑物业 | responseToReport | 对报告的响应 | Slow | 缓慢 |
+| Property Management YWG | 义德西苑物业 | responseToReport | 对报告的响应 | Mediation Failed | 调解失败 |
+| Property Management YWG | 义德西苑物业 | deflectedResponsibilityFor | 就...推卸责任 | Building Elevator Often Broken | 楼栋电梯经常损坏 |
+| Property Management YWG | 义德西苑物业 | hasManagementPerformance | 管理表现 | Below Average | 低于平均 |
+| Yide West Garden | 义德西苑 | hasOrganization | 拥有组织 | Residents Committee YWG | 义德西苑居委会 |
+| Residents Committee YWG | 义德西苑居委会 | hasInfluence | 影响力 | Weak | 弱 |
+| Residents Committee YWG | 义德西苑居委会 | organizedEvent | 组织活动 | Community CleanUp Failed | 社区大扫除(失败) |
+| Community CleanUp Failed | 社区大扫除(失败) | hadParticipation | 参与度 | Low | 低 |
+| Yide West Garden | 义德西苑 | hasIssue | 存在问题 | Illegal Construction Balcony | 阳台违章搭建 |
+| Illegal Construction Balcony | 阳台违章搭建 | occursAt | 发生于 | Building 8 YWG | 义德西苑8栋 |
+| Resident U | 居民U | residesIn | 居住于 | Building 8 YWG | 义德西苑8栋 |
+| Resident U | 居民U | reportsIssue | 报告问题 | Illegal Construction Balcony | 阳台违章搭建 |
+| Resident AF | 居民AF | residesIn | 居住于 | Building 8 YWG | 义德西苑8栋 |
+| Resident AF | 居民AF | performedAction | 执行了 | Illegal Construction Balcony | 阳台违章搭建 |
+| Resident U | 居民U | hasConflictWith | 与...有矛盾 | Resident AF | 居民AF |
+| Resident U | 居民U | escalatedIssueTo | 将问题上报至 | Urban Management Bureau | 城管部门 |
+| Urban Management Bureau | 城管部门 | responseToReport | 对报告的响应 | Pending Investigation | 待调查 |
+| Yide West Garden | 义德西苑 | hasSpatialElement | 拥有空间要素 | Community Gate North | 北门 |
+| Community Gate North | 北门 | exhibitsIssue | 存在问题 | Security Guard Laxity | 保安松懈 |
+| Security Guard Laxity | 保安松懈 | leadsTo | 导致 | Unauthorized Access | 外来人员随意进入 |
+| Resident G | 居民G | residesIn | 居住于 | Yide East Garden | 义德东苑 |
+| Resident G | 居民G | worksAs | 职业 | Teacher | 教师 |
+| Resident G | 居民G | reportsIssue | 报告问题 | Stray Animals Problem | 流浪动物问题 |
+| Resident G | 居民G | actionTakenOn | 采取行动 | Feeding Stray Animals | 投喂流浪动物 |
+| Stray Animals Problem | 流浪动物问题 | leadsTo | 导致 | Hygiene Issues | 卫生问题 |
+| Resident P | 居民P | residesIn | 居住于 | Yide East Garden | 义德东苑 |
+| Resident P | 居民P | hasConflictWith | 与...有矛盾 | Resident G | 居民G |
+| Resident P | 居民P | hasConflictReason | 矛盾原因 | Stray Animals Problem | 流浪动物问题 |
+| Resident P | 居民P | reportedIssueTo | 向...报告问题 | Property Management YEG | 义德东苑物业 |
+| Resident H | 居民H | residesIn | 居住于 | Yide East Garden | 义德东苑 |
+| Resident H | 居民H | hasHousingStatus | 住房状况 | Tenant | 租户 |
+| Resident H | 居民H | reportsIssue | 报告问题 | Inadequate Public Lighting | 公共照明不足 |
+| Inadequate Public Lighting | 公共照明不足 | occursAt | 发生于 | Public Pathway C04 | C04区公共步道 |
+| Resident H | 居民H | expressesConcernAbout | 担忧 | Nighttime Safety | 夜间安全 |
+| Resident L | 居民L | residesIn | 居住于 | Yide East Garden | 义德东苑 |
+| Resident L | 居民L | hasHousingStatus | 住房状况 | Owner | 业主 |
+| Resident L | 居民L | perceivesEnvironmentAs | 感知环境为 | Good | 好 |
+| Resident L | 居民L | participatesIn | 参与 | Card Playing Group Informal | 棋牌小组(非正式) |
+| Resident AI | 居民AI | residesIn | 居住于 | Yide East Garden | 义德东苑 |
+| Resident AI | 居民AI | participatesIn | 参与 | Card Playing Group Informal | 棋牌小组(非正式) |
+| Card Playing Group Informal | 棋牌小组(非正式) | gathersAt | 聚集于 | Community Pavilion | 社区凉亭 |
+| Card Playing Group Informal | 棋牌小组(非正式) | causesIssue | 导致问题 | Noise Pollution Afternoon | 午后噪音 |
+| Resident R | 居民R | residesIn | 居住于 | Yide East Garden | 义德东苑 |
+| Resident R | 居民R | reportedIssueTo | 向...报告问题 | Property Management YEG | 义德东苑物业 |
+| Resident R | 居民R | reportsIssue | 报告问题 | Noise Pollution Afternoon | 午后噪音 |
+| Resident AG | 居民AG | residesIn | 居住于 | Yide East Garden | 义德东苑 |
+| Resident AG | 居民AG | hasConflictWith | 与...有矛盾 | Resident AI | 居民AI |
+| Resident AG | 居民AG | hasConflictReason | 矛盾原因 | Noise Pollution Afternoon | 午后噪音 |
+| Resident AH | 居民AH | residesIn | 居住于 | Yide East Garden | 义德东苑 |
+| Resident AH | 居民AH | isMemberOf | 是...的成员 | Young Parents Group | 年轻父母群体 |
+| Resident AH | 居民AH | suffersFrom | 遭受困扰 | Noise Pollution Afternoon | 午后噪音 |
+| Noise Pollution Afternoon | 午后噪音 | leadsTo | 导致 | Intergenerational Conflict | 代际冲突 |
+| Yide East Garden | 义德东苑 | hasOrganization | 拥有组织 | Card Playing Group Informal | 棋牌小组(非正式) |
+| Yide East Garden | 义德东苑 | isManagedBy | 由...管理 | Property Management YEG | 义德东苑物业 |
+| Property Management YEG | 义德东苑物业 | responseToReport | 对报告的响应 | Selective | 选择性的 |
+| Property Management YEG | 义德东苑物业 | resolvedIssue | 解决了问题 | Inadequate Public Lighting | 公共照明不足 |
+| Property Management YEG | 义德东苑物业 | ignoredIssue | 忽略了问题 | Stray Animals Problem | 流浪动物问题 |
+| Property Management YEG | 义德东苑物业 | ignoredIssue | 忽略了问题 | Noise Pollution Afternoon | 午后噪音 |
+| Property Management YEG | 义德东苑物业 | hasManagementPerformance | 管理表现 | Average | 一般 |
+| Yide East Garden | 义德东苑 | hasInfrastructure | 拥有设施 | Community Pavilion | 社区凉亭 |
+| Community Pavilion | 社区凉亭 | hasCondition | 状况 | Poorly Maintained | 维护不善 |
+| Poorly Maintained | 维护不善 | leadsTo | 导致 | Safety Concerns | 安全顾虑 |
+| Resident AH | 居民AH | expressesConcernAbout | 担忧 | Safety Concerns | 安全顾虑 |
+| Yide East Garden | 义德东苑 | hasIssue | 存在问题 | High Throwing Of Objects | 高空抛物 |
+| High Throwing Of Objects | 高空抛物 | observedLocation | 观察地点 | Building 11 YEG | 义德东苑11栋 |
+| Yide East Garden | 义德东苑 | hasIssue | 存在问题 | Green Space Neglect | 绿化带无人维护 |
+| Green Space Neglect | 绿化带无人维护 | leadsTo | 导致 | Pest Infestation | 蚊虫滋生 |
+| Resident V | 居民V | residesIn | 居住于 | Yide East Garden | 义德东苑 |
+| Resident V | 居民V | reportsIssue | 报告问题 | Pest Infestation | 蚊虫滋生 |
+| Property Management YEG | 义德东苑物业 | performedAction | 执行了 | Perfunctory Pest Control | 敷衍的害虫防治 |
+| Perfunctory Pest Control | 敷衍的害虫防治 | leadsTo | 导致 | Recurring Problem | 问题复发 |
+| Yide East Garden | 义德东苑 | hasIssue | 存在问题 | Trash Chute Blockage | 垃圾管道堵塞 |
+| Trash Chute Blockage | 垃圾管道堵塞 | occursAt | 发生于 | Building 11 YEG | 义德东苑11栋 |
+| Trash Chute Blockage | 垃圾管道堵塞 | leadsTo | 导致 | Garbage Piling Up | 垃圾堆积 |
+| Garbage Piling Up | 垃圾堆积 | occursAt | 发生于 | Public Corridor Fl8 Bldg11 | 11栋8楼公共走廊 |
+| Resident AJ | 居民AJ | residesIn | 居住于 | Building 11 YEG | 义德东苑11栋 |
+| Resident AJ | 居民AJ | reportedIssueTo | 向...报告问题 | Property Management YEG | 义德东苑物业 |
+| Resident AJ | 居民AJ | reportsIssue | 报告问题 | Garbage Piling Up | 垃圾堆积 |
+| Resident AK | 居民AK | residesIn | 居住于 | Yide East Garden | 义德东苑 |
+| Resident AK | 居民AK | reportsIssue | 报告问题 | Suspected Gambling | 疑似聚众赌博 |
+| Suspected Gambling | 疑似聚众赌博 | associatedWith | 与...有关 | Card Playing Group Informal | 棋牌小组(非正式) |
+| Resident AK | 居民AK | reportedIssueTo | 向...报告问题 | Police | 警方 |
+`;
+    DATA_STORE.knowledgeGraph = parseKgData(kgMarkdownData);
+}
+
+function initMatrixRain() {
+    const canvas = document.getElementById('hero-matrix-canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const keywords = [...new Set(DATA_STORE.knowledgeGraph.nodes.map(n => n.nameEn.replace(/ \d{6,}/, '')))].join('');
+    
+    const fontSize = 16;
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops = [];
+    for (let i = 0; i < columns; i++) {
+        drops[i] = 1;
+    }
+
+    function draw() {
+        ctx.fillStyle = 'rgba(10, 25, 47, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = DATA_STORE.styles.primary;
+        ctx.font = `${fontSize}px var(--font-mono)`;
+
+        for (let i = 0; i < drops.length; i++) {
+            const text = keywords.charAt(Math.floor(Math.random() * keywords.length));
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+            drops[i]++;
+        }
+    }
+
+    const intervalId = setInterval(draw, 33);
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        // Recalculate columns and drops on resize if needed
+    });
+}
+
+
+function initScrollAnimations() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                
+                const panel = entry.target.querySelector('.interactive-panel, .glossary-grid'); 
+                if (panel && !panel.dataset.initialized) {
+                    panel.dataset.initialized = 'true';
+                     switch(panel.id) {
+                        case 'decoder-panel': initDecoderModule(); break;
+                        case 'atlas-panel': initAtlasModule(); break;
+                        case 'correlation-panel': initCorrelationModule(); break;
+                        case 'loco-panel': initLocoModule(); break;
+                        case 'kg-panel': initKnowledgeGraph(); break;
+                    }
+                }
+            }
+        });
+    }, { threshold: 0.2 });
+    document.querySelectorAll('.content-wrapper.fade-in-up').forEach(el => observer.observe(el));
+}
+
+function initDecoderModule() {
+    const container = d3.select("#decoder-viz");
+    const infoContainer = d3.select("#decoder-info");
+    const { width, height } = container.node().getBoundingClientRect();
+    if (width === 0) return;
+    const svg = container.append("svg").attr("width", width).attr("height", height);
+
+    const concepts = {
+        pr: { title: "Psychological Resilience (PR)", description: "The capacity of individuals to adapt and recover from adversity. It's not just about 'bouncing back', but about navigating stress and trauma.", quote: "那事儿之后，我好几个月晚上都睡不着觉。", enQuote: `"After that incident, I couldn't sleep well for several months."` },
+        sc: { title: "Social Capital (SC)", description: "The networks of relationships among people who live and work in a particular society, enabling that society to function effectively.", quote: "邻居们都不认识，出了事也不知道找谁帮忙。", enQuote: `"I don't know my neighbors; I wouldn't know who to ask for help if something happened."` },
+        be: { title: "Built Environment (BE)", description: "The human-made surroundings that provide the setting for human activity, from buildings and parks to infrastructure.", quote: "楼道里堆满了杂物，消防通道根本不通畅。", enQuote: `"The hallways are cluttered with debris, the fire escape is completely blocked."` },
+        cg: { title: "Civic Governance (CG)", description: "The processes and structures of public policy making and implementation, and the role of civil society in this.", quote: "跟物业反映了好几次了，根本没人管。", enQuote: `"We've reported it to the property management multiple times, but nobody cares."` }
+    };
+
+    const drawViolin = (concept) => {
+        svg.selectAll("*").remove();
+        const data = DATA_STORE.households.map(d => d[concept]);
+        
+        const margin = {top: 20, right: 30, bottom: 40, left: 50};
+        const chartWidth = width - margin.left - margin.right;
+        const chartHeight = height - margin.top - margin.bottom;
+
+        const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+        const y = d3.scaleLinear().domain([1, 5]).range([chartHeight, 0]);
+        g.append("g").call(d3.axisLeft(y).ticks(5));
+        const x = d3.scaleLinear().range([0, chartWidth]);
+        const bins = d3.histogram().domain(y.domain()).thresholds(y.ticks(20)).value(d => d)(data);
+        const maxNum = d3.max(bins, d => d.length);
+        x.domain([-maxNum, maxNum]);
+
+        const area = d3.area().x0(d => x(-d.length)).x1(d => x(d.length)).y(d => y(d.x0)).curve(d3.curveCatmullRom);
+        
+        g.append("path").datum(bins).attr("transform", `translate(${chartWidth/2}, 0)`).attr("d", area)
+            .style("fill", 'var(--primary)').style("fill-opacity", 0.4)
+            .style("stroke", 'var(--primary)').style("stroke-width", 2);
+    };
+
+    d3.selectAll("#decoder-panel button").on("click", function() {
+        const button = d3.select(this);
+        if(button.classed("active")) return;
+        d3.selectAll("#decoder-panel button").classed("active", false);
+        button.classed("active", true);
+        const conceptId = button.attr("data-concept");
+        
+        infoContainer.select("h3").text(concepts[conceptId].title);
+        infoContainer.select("#decoder-info-text p").text(concepts[conceptId].description);
+        infoContainer.select(".quote").html(`${concepts[conceptId].quote}<span class="en">${concepts[conceptId].enQuote}</span>`);
+        
+        drawViolin(conceptId);
+    });
+    drawViolin('pr');
+}
+
+function initAtlasModule() {
+    const featureKeys = ['pr', 'sc', 'be', 'cg'];
+    const Xraw = DATA_STORE.households.map(d => featureKeys.map(k => +d[k] || 0));
+    const Z = zscore(Xraw);
+    const Y01 = pca2D(Z);
+    
+    const K = 4;
+    const km = kmeans(Y01, K, 40);
+    const colors = d3.schemeTableau10;
+
+    const personas = [
+        { title: "Struggling Renters", description: "Low resilience and social capital, highly sensitive to built environment and governance issues." },
+        { title: "Established Families", description: "Balanced profile, representing the community average with moderate scores across all dimensions." },
+        { title: "Disengaged Owners", description: "Personally resilient but show low social capital and civic engagement, creating community vulnerabilities." },
+        { title: "High-Capital Seniors", description: "Well-connected and resilient, but less engaged with or concerned by issues of the built environment." },
+    ];
+    
+    const W = 960, H = 560;
+    const svg = d3.select('#atlas');
+    svg.selectAll('*').remove();
+    
+    const defs = svg.append('defs');
+    const glowFilter = defs.append('filter').attr('id', 'atlas-glow');
+    glowFilter.append('feGaussianBlur').attr('stdDeviation', '3.5').attr('result', 'coloredBlur');
+    const feMerge = glowFilter.append('feMerge');
+    feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+    feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+    const x = d3.scaleLinear().domain([0, 1]).range([0, W]);
+    const y = d3.scaleLinear().domain([0, 1]).range([H, 0]);
+
+    const densityData = d3.contourDensity().x(d => x(d[0])).y(d => y(d[1])).size([W, H]).bandwidth(30)(Y01);
+    svg.append('g').selectAll('path').data(densityData).join('path')
+        .attr('d', d3.geoPath()).attr('fill', 'var(--soft)').attr('stroke', 'var(--edge)').attr('stroke-width', .6);
+    
+    const pointsWithCluster = Y01.map((p, i) => ({ x: p[0], y: p[1], cluster: km.index[i], original: DATA_STORE.households[i] }));
+    
+    const hullGroup = svg.append("g").attr('filter', 'url(#atlas-glow)');
+    const lineGenerator = d3.line().curve(d3.curveCatmullRomClosed); // Use a curve interpolator
+
+    for(let i=0; i<K; i++) {
+        const clusterPoints = pointsWithCluster.filter(p => p.cluster === i).map(p => [x(p.x), y(p.y)]);
+        if(clusterPoints.length > 2) {
+            const hull = d3.polygonHull(clusterPoints);
+            hullGroup.append("path")
+                .attr("d", lineGenerator(hull)) // Use the line generator
+                .attr("fill", d3.color(colors[i]).copy({opacity: 0.15}))
+                .attr("stroke", d3.color(colors[i]).copy({opacity: 0.8}))
+                .attr("stroke-width", 2)
+                .attr("stroke-linejoin", "round");
+        }
+    }
+
+    svg.append("g").selectAll("circle").data(pointsWithCluster).join("circle")
+        .attr("cx", d => x(d.x)).attr("cy", d => y(d.y))
+        .attr("r", 3.5)
+        .attr("fill", d => colors[d.cluster])
+        .attr("fill-opacity", 0.8)
+        .attr("stroke", "rgba(255,255,255,0.2)")
+        .attr("stroke-width", 0.5);
+
+    const container = d3.select('#atlas-container');
+    const annotationPositions = [ {x: 0.1, y: 0.8}, {x: 0.75, y: 0.75}, {x: 0.8, y: 0.2}, {x: 0.2, y: 0.15} ];
+
+    for (let i = 0; i < K; i++) {
+        const pos = annotationPositions[i];
+        const left = x(pos.x);
+        const top = y(pos.y);
+        
+        container.append('div').attr('class', 'atlas-annotation')
+            .style('left', `${left}px`).style('top', `${top}px`)
+            .style('transform', `translate(-50%, -50%)`)
+            .style('border-color', colors[i])
+            .html(`
+                <div class="title"><span class="color-dot" style="background-color:${colors[i]}"></span>Group ${String.fromCharCode(65 + i)}: ${personas[i].title}</div>
+                <p>${personas[i].description}</p>
+            `);
+    }
+
+    const tip = d3.select('#atlas-tip');
+    svg.selectAll("circle").on('mousemove', (ev, d) => {
+        tip.html(`<b>ID:</b> ${d.original.id} | <b>Community:</b> ${d.original.community}<br><b>Group:</b> ${String.fromCharCode(65 + d.cluster)} (${personas[d.cluster].title})`)
+            .style('left', (ev.pageX + 14) + 'px').style('top', (ev.pageY - 18) + 'px').style('opacity', 1);
+    }).on('mouseout', () => tip.style('opacity', 0));
+}
+
+
+function initCorrelationModule() {
+    const variables = ['pr', 'sc', 'be', 'cg'];
+    const data = DATA_STORE.households;
+    const tooltip = d3.select('.tooltip');
+    
+    // --- Heatmap ---
+    const heatmapContainer = d3.select('#correlation-heatmap-container');
+    const { width: h_width, height: h_height } = heatmapContainer.node().getBoundingClientRect();
+    if(h_width === 0) return;
+    const h_svg = heatmapContainer.append('svg').attr('width', h_width).attr('height', h_height);
+    
+    let maxCorr = { value: 0, row: -1, col: -1 };
+    const correlationMatrix = [];
+    for(let i=0; i<variables.length; i++){
+        for(let j=0; j<variables.length; j++){
+            const x = data.map(d => d[variables[i]]);
+            const y = data.map(d => d[variables[j]]);
+            const meanX = d3.mean(x);
+            const meanY = d3.mean(y);
+            const stdX = d3.deviation(x);
+            const stdY = d3.deviation(y);
+            let corr = 0;
+            if (stdX > 0 && stdY > 0) {
+              for(let k=0; k<data.length; k++) corr += (x[k] - meanX) * (y[k] - meanY);
+              corr = corr / ((data.length - 1) * stdX * stdY);
+            }
+            correlationMatrix.push({row: i, col: j, value: corr});
+            if (i !== j && Math.abs(corr) > Math.abs(maxCorr.value)) {
+                maxCorr = { value: corr, row: i, col: j };
+            }
+        }
+    }
+    const colorScale = d3.scaleDiverging([-1, 0, 1], [DATA_STORE.styles.red, '#0A192F', DATA_STORE.styles.primary]);
+    const xScale = d3.scaleBand().domain(d3.range(variables.length)).range([50, h_width-20]).padding(0.1);
+    const yScale = d3.scaleBand().domain(d3.range(variables.length)).range([20, h_height-50]).padding(0.1);
+    
+    h_svg.selectAll('rect').data(correlationMatrix).join('rect')
+      .attr('x', d => xScale(d.col)).attr('y', d => yScale(d.row))
+      .attr('width', xScale.bandwidth()).attr('height', yScale.bandwidth())
+      .attr('fill', d => colorScale(d.value)).style('cursor', 'pointer')
+      .attr('class', d => (d.row === maxCorr.row && d.col === maxCorr.col) || (d.row === maxCorr.col && d.col === maxCorr.row) ? 'highlighted-cell' : '')
+      .on('mouseover', function(event, d) {
+          d3.select(this).style('stroke', 'white').style('stroke-width', 2);
+          drawScatter(variables[d.row], variables[d.col]);
+          tooltip.style('opacity', 1)
+              .html(`Correlation(${variables[d.row].toUpperCase()}, ${variables[d.col].toUpperCase()})<br><strong>Value: ${d.value.toFixed(3)}</strong>`)
+              .style('left', `${event.pageX + 15}px`).style('top', `${event.pageY}px`);
+      }).on('mouseout', function() { 
+          d3.select(this).style('stroke', 'none');
+          tooltip.style('opacity', 0);
+      });
+      
+    h_svg.selectAll('.row-label').data(variables).join('text').attr('class', 'tick text')
+      .attr('x', 45).attr('y', (d, i) => yScale(i) + yScale.bandwidth() / 2)
+      .attr('dy', '0.32em').attr('text-anchor', 'end').text(d => d.toUpperCase());
+    h_svg.selectAll('.col-label').data(variables).join('text').attr('class', 'tick text')
+      .attr('x', (d, i) => xScale(i) + xScale.bandwidth() / 2).attr('y', h_height - 35)
+      .attr('text-anchor', 'middle').text(d => d.toUpperCase());
+    
+    // --- Scatter Plot ---
+    const drawScatter = (varX, varY) => {
+        d3.select('#scatterplot-container svg').remove();
+        const scatterContainer = d3.select('#scatterplot-container');
+        const { width, height } = scatterContainer.node().getBoundingClientRect();
+        const svg = scatterContainer.append('svg').attr('width', width).attr('height', height);
+        const margin = {top: 40, right: 20, bottom: 40, left: 50};
+        const x = d3.scaleLinear().domain([1,5]).range([margin.left, width - margin.right]);
+        const y = d3.scaleLinear().domain([1,5]).range([height - margin.bottom, margin.top]);
+        svg.append('g').attr('transform', `translate(0, ${height-margin.bottom})`).call(d3.axisBottom(x).ticks(5));
+        svg.append('g').attr('transform', `translate(${margin.left}, 0)`).call(d3.axisLeft(y).ticks(5));
+        svg.append("text").attr("class", "axis-label").attr("text-anchor", "middle").attr("x", width/2).attr("y", height - 5).text(varX.toUpperCase());
+        svg.append("text").attr("class", "axis-label").attr("text-anchor", "middle").attr("transform", "rotate(-90)").attr("x", -height/2).attr("y", 15).text(varY.toUpperCase());
+        svg.selectAll('circle').data(data).join('circle')
+            .attr('cx', d => x(d[varX])).attr('cy', d => y(d[varY]))
+            .attr('r', 3.5).attr('fill', 'var(--primary)').attr('opacity', 0.6);
+    };
+    drawScatter(variables[maxCorr.row], variables[maxCorr.col]);
+}
+
+function initLocoModule() {
+    const gridContainer = d3.select("#loco-module-grid");
+    if(!gridContainer.node()) return;
+
+    const folds = [
+        { name: 'Test on C01 (High Similarity)', r2: 0.38 }, 
+        { name: 'Test on C02 (High Drift)', r2: -0.15 }, 
+        { name: 'Test on C03 (Moderate Similarity)', r2: 0.09 }, 
+        { name: 'Test on C04 (High Drift)', r2: -0.21 }
+    ];
+
+    folds.forEach((fold, i) => {
+        const cell = gridContainer.append('div').attr('class', 'loco-grid-cell');
+        cell.append('div').attr('class', 'title').text(fold.name);
+        cell.append('div').attr('class', 'r2-score')
+            .style('color', fold.r2 > 0.1 ? 'var(--primary)' : 'var(--highlight-red)')
+            .html(`R² = ${fold.r2.toFixed(2)}`);
+        
+        const svg = cell.append('svg').attr('width', '100%').attr('height', '100%');
+        drawScatter(svg, fold.r2, i);
+    });
+
+    function drawScatter(svg, r2, index) {
+        const { width, height } = svg.node().getBoundingClientRect();
+        if (width === 0 || height === 0) return; 
+
+        const mockData = Array.from({length: 60}, () => ({ actual: 1.5 + Math.random() * 3.5 }));
+        mockData.forEach(d => {
+            const noise = (Math.random() - 0.5) * (1 - Math.max(0, r2)) * 4;
+            d.predicted = d.actual * Math.max(0, r2) + (3 * (1 - Math.max(0, r2))) + noise;
+            d.predicted = Math.max(1, Math.min(5, d.predicted));
+        });
+        
+        const margin = {top: 45, right: 20, bottom: 45, left: 55};
+        const x = d3.scaleLinear().domain([1, 5]).range([margin.left, width - margin.right]);
+        const y = d3.scaleLinear().domain([1, 5]).range([height - margin.bottom, margin.top]);
+
+        const g = svg.append('g');
+        g.append('g').attr('transform', `translate(0, ${height - margin.bottom})`).call(d3.axisBottom(x).ticks(3));
+        g.append('g').attr('transform', `translate(${margin.left}, 0)`).call(d3.axisLeft(y).ticks(3));
+
+        g.append('line').attr('x1', x(1)).attr('y1', y(1)).attr('x2', x(5)).attr('y2', y(5))
+            .attr('stroke', 'var(--muted)').attr('stroke-dasharray', '4');
+        
+        g.selectAll('circle').data(mockData).join('circle')
+            .attr('cx', d => x(d.actual)).attr('cy', d => y(d.predicted))
+            .attr('r', 3).attr('fill', r2 > 0.1 ? 'var(--primary)' : 'var(--highlight-red)')
+            .attr('opacity', 0.6);
+        
+        if (index === 0 || index === 2) {
+             svg.append("text").attr("class", "axis-label").attr("text-anchor", "middle").attr("transform", "rotate(-90)")
+                .attr("x", -height/2).attr("y", 20).text("Predicted PR");
+        }
+        if (index === 2 || index === 3) {
+             svg.append("text").attr("class", "axis-label").attr("text-anchor", "middle")
+                .attr("x", width/2).attr("y", height - 10).text("Actual PR");
+        }
+    }
+}
+
+
+function initKnowledgeGraph() {
+    const { nodes, links } = DATA_STORE.knowledgeGraph;
+    if (!nodes || nodes.length === 0) return;
+    
+    const container = d3.select('#kg-svg-container');
+    const svg = container.select('#kg-svg');
+    const { width } = container.node().getBoundingClientRect();
+    const height = 720;
+    
+    svg.attr('viewBox', `0 0 ${width} ${height}`);
+    svg.selectAll('*').remove();
+
+    const g = svg.append('g');
+
+    const degrees = new Map();
+    nodes.forEach(node => { degrees.set(node.id, 0); });
+    links.forEach(link => {
+        if (typeof link.source !== 'object') link.source = nodes.find(n => n.id === link.source);
+        if (typeof link.target !== 'object') link.target = nodes.find(n => n.id === link.target);
+        if (link.source && link.target) {
+          degrees.set(link.source.id, degrees.get(link.source.id) + 1);
+          degrees.set(link.target.id, degrees.get(link.target.id) + 1);
+        }
+    });
+
+    const rScale = d3.scaleSqrt().domain(d3.extent(Array.from(degrees.values()))).range([6, 20]);
+    const colorScale = d3.scaleOrdinal(d3.schemeTableau10).domain(['Issue', 'Event', 'Organization', 'SpatialElement', 'Community', 'Concept']);
+    
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(120).strength(0.4))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide().radius(d => rScale(degrees.get(d.id) || 0) + 10))
+        .on("tick", ticked)
+        .on("end", () => { console.log("KG Simulation Stabilized."); }); // Optimization
+
+    const link = g.append("g").selectAll("path").data(links)
+        .join("path").attr("id", (d, i) => `link-path-${i}`)
+        .attr("stroke", "var(--edge)").attr("stroke-opacity", 0.6)
+        .attr("stroke-width", 1.5).attr("fill", "none");
+
+    const edgeLabels = g.append("g").selectAll("text").data(links).join("text").append("textPath")
+        .attr("href", (d, i) => `#link-path-${i}`).style("text-anchor", "middle")
+        .attr("startOffset", "50%").attr("fill", "var(--muted)")
+        .style("font-size", "9px").style("font-family", "var(--font-mono)")
+        .text(d => d.type);
+
+    const node = g.append("g").selectAll("g").data(nodes).join("g").call(drag(simulation));
+    node.append("circle")
+        .attr("r", d => rScale(degrees.get(d.id) || 0))
+        .attr("fill", d => colorScale(d.type))
+        .attr("stroke", "var(--bg)").attr("stroke-width", 3);
+
+    node.append("text").text(d => d.nameEn).attr("x", 0)
+        .attr("y", d => -rScale(degrees.get(d.id) || 0) - 8)
+        .attr("text-anchor", "middle").attr("fill", "var(--fg)")
+        .style("font-size", "11px").style("font-family", "var(--font-mono)")
+        .style("paint-order", "stroke").style("stroke", "var(--bg)")
+        .style("stroke-width", "3px").style("stroke-linejoin", "round");
+        
+    const tooltip = d3.select('.tooltip');
+    node.on('mouseover', (event, d) => {
+        if(d3.select("#kg-search").property("value").trim().length > 0) return;
+        tooltip.style('opacity', 1)
+          .html(`<b>${d.nameEn}</b> (${d.name})<br>Type: ${d.type}<br>Connections: ${degrees.get(d.id) || 0}`)
+          .style('left', `${event.pageX + 15}px`).style('top', `${event.pageY}px`);
+        
+        link.attr('stroke-opacity', l => (l.source === d || l.target === d) ? 0.9 : 0.1);
+        edgeLabels.style('opacity', l => (l.source === d || l.target === d) ? 1 : 0.1);
+        node.style('opacity', n => {
+            const isNeighbor = links.some(l => (l.source === d && l.target === n) || (l.target === d && l.source === n));
+            return (n === d || isNeighbor) ? 1 : 0.2;
+        });
+    }).on('mouseout', () => {
+        if(d3.select("#kg-search").property("value").trim().length > 0) return;
+        tooltip.style('opacity', 0);
+        link.attr('stroke-opacity', 0.6);
+        edgeLabels.style('opacity', 1);
+        node.style('opacity', 1);
+    });
+
+    function ticked() {
+        link.attr("d", d => `M ${d.source.x} ${d.source.y} L ${d.target.x} ${d.target.y}`);
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
+    }
+    
+    // Highlight key path
+    const keyPathNodeIds = ["Insufficient Charging Ports", "Illegal Private Charging", "Fire Incident 20240223"];
+    node.filter(d => keyPathNodeIds.includes(d.id)).classed('key-path-node', true);
+    link.filter(l => l.source && l.target && keyPathNodeIds.includes(l.source.id) && keyPathNodeIds.includes(l.target.id)).classed('key-path-link', true);
+    
+    function drag(simulation) {
+      function dragstarted(event) { if (!event.active) simulation.alphaTarget(0.3).restart(); event.subject.fx = event.subject.x; event.subject.fy = event.subject.y; }
+      function dragged(event) { event.subject.fx = event.x; event.subject.fy = event.y; }
+      function dragended(event) { if (!event.active) simulation.alphaTarget(0); event.subject.fx = null; event.subject.fy = null; } // Optimization
+      return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
+    }
+    
+    svg.call(d3.zoom().scaleExtent([.3, 3]).on('zoom', ({transform}) => g.attr('transform', transform)));
+
+    // Search functionality
+    d3.select("#kg-search").on("keyup", function() {
+        const searchTerm = this.value.toLowerCase().trim();
+
+        if (searchTerm.length === 0) {
+            node.style("opacity", 1);
+            link.style("opacity", 1);
+            edgeLabels.style("opacity", 1);
+            return;
+        }
+
+        const matchingNodeIds = new Set();
+        nodes.forEach(d => {
+            if (d.nameEn.toLowerCase().includes(searchTerm)) {
+                matchingNodeIds.add(d.id);
+            }
+        });
+
+        const linkedIds = new Set(matchingNodeIds);
+        links.forEach(l => {
+            if (matchingNodeIds.has(l.source.id) || matchingNodeIds.has(l.target.id)) {
+                linkedIds.add(l.source.id);
+                linkedIds.add(l.target.id);
+            }
+        });
+
+        node.style("opacity", d => linkedIds.has(d.id) ? 1 : 0.1);
+        link.style("opacity", l => (matchingNodeIds.has(l.source.id) || matchingNodeIds.has(l.target.id)) ? 0.9 : 0.1);
+        edgeLabels.style("opacity", l => (matchingNodeIds.has(l.source.id) || matchingNodeIds.has(l.target.id)) ? 1 : 0.1);
+    });
+}
+
+
+// --- START THE APP ---
+document.addEventListener("DOMContentLoaded", initializeApp);
+</script>
+
+</body>
+</html>
+
+
