@@ -1,20 +1,34 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Portfolio 2025: Urban Analytics & Interactive Prototypes
 
-# Run and deploy your AI Studio app
+> **Technical Note on Data & Architecture:**
+>
+> This repository houses the **frontend visualization layer** of my research portfolio.
+>
+> To ensure optimal rendering performance and browser compatibility, complex spatial econometric calculations (including the **Spatial Durbin Model** and **Graph Theory metrics** mentioned in the research scope) were performed **offline** using Python (PySAL/NetworkX).
+>
+> The interactive interfaces presented here utilize **pre-computed parameters** and **representative synthetic datasets** to demonstrate the algorithmic logic and policy scenarios in real-time, without the latency of server-side statistical computing.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/temp/1
+## Project Overview
+
+This portfolio explores the intersection of Urban Science, Human Geography, and Interaction Design.
+
+### Projects Included:
+1.  **Scale. Network. Function.** (Urban Vitality Simulation)
+2.  **Unseen Fractures** (Community Resilience Analytics)
+3.  **Algorithmic Colonization** (Spatial Texture Analysis)
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+**Prerequisites:** Node.js
 
+1.  Install dependencies:
+    ```bash
+    npm install
+    ```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+2.  Run the app:
+    ```bash
+    npm run dev
+    ```
