@@ -31,7 +31,7 @@ const App: React.FC = () => {
                  Scale. Network. Function.
                </Typography.Display>
                <Typography.Body className="max-w-2xl mx-auto text-[#86868b] font-light mt-8">
-                 A causal identification of urban vitality simulation in the Xinjiekou district.
+                 An interactive demonstration of causal identification logic for urban vitality in Xinjiekou.
                </Typography.Body>
             </div>
          </div>
@@ -51,7 +51,7 @@ const App: React.FC = () => {
                 </div>
                 <div className="lg:col-span-6 lg:text-right">
                     <Typography.Body className="text-sm md:text-base">
-                        Constructing a 50m×50m mesh to capture the invisible flows. <br className="hidden lg:block"/>412 sensors tracking morphological DNA across the Xinjiekou district.
+                       Constructing 50m×50m meshes to simulate <br className="hidden lg:block"/>412 sensors tracking morphological DNA across the Xinjiekou district.
                     </Typography.Body>
                 </div>
             </div>
@@ -127,7 +127,7 @@ const App: React.FC = () => {
                 <Typography.Body>
                     Contrary to traditional planning theory, density is not a universal good. 
                     <br/><br/>
-                    Our coefficients reveal that <span className="font-semibold text-[#1d1d1f]">FAR (Floor Area Ratio)</span> has a parasitic relationship with neighbors (-0.145), while <span className="font-semibold text-[#1d1d1f]">Network Integration</span> acts as a multiplier (+0.850).
+                    The model parameters illustrate that <span className="font-semibold text-[#1d1d1f]">FAR (Floor Area Ratio)</span> has a parasitic relationship with neighbors (-0.145), while <span className="font-semibold text-[#1d1d1f]">Network Integration</span> acts as a multiplier (+0.850).
                 </Typography.Body>
              </div>
              <div className="order-2 h-[400px] lg:h-[500px] w-full">
@@ -239,30 +239,44 @@ const App: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Column 3: Pubs */}
-                <div className="space-y-6">
-                    <h3 className="text-[#1d1d1f] font-sans font-medium text-lg mb-4">Publication & Code</h3>
-                    <div className="space-y-6 text-sm">
-                        <div className="group cursor-pointer">
-                            <div className="flex items-center gap-2 text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors">
-                                <FileText size={16} />
-                                <span className="font-medium">Full Research Report [PDF]</span>
-                            </div>
-                            <p className="text-[#86868b] mt-1 text-xs">
-                                A detailed academic paper outlining the research methodology.
-                            </p>
-                        </div>
-                        <div className="group cursor-pointer">
-                            <div className="flex items-center gap-2 text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors">
-                                <Github size={16} />
-                                <span className="font-medium">Project Repository [GitHub]</span>
-                            </div>
-                            <p className="text-[#86868b] mt-1 text-xs">
-                                Access the complete source code for this interactive prototype.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                {/* Column 3: Methodology & Architecture (Non-clickable Info Cards) */}
+<div className="space-y-6">
+    <h3 className="text-[#1d1d1f] font-sans font-medium text-lg mb-4">Technical Architecture</h3>
+    
+    <div className="space-y-6 text-sm">
+        
+        {/* Item 1: 解释后端/离线模型 */}
+        <div className="group">
+            <div className="flex items-center gap-2 text-[#1d1d1f] mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                </svg>
+                <span className="font-medium">Offline Analysis Layer</span>
+            </div>
+            <p className="text-[#86868b] text-xs leading-relaxed">
+                Utilized <strong>Spatial Durbin Model (SDM)</strong> via Python (PySAL) to calculate spatial spillover effects and density coefficients. <span className="text-[#86868b]/70 italic">(Internal processing)</span>
+            </p>
+        </div>
+
+        {/* Item 2: 解释前端/在线模型 */}
+        <div className="group">
+            <div className="flex items-center gap-2 text-[#1d1d1f] mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+                <span className="font-medium">Frontend Simulation Layer</span>
+            </div>
+            <p className="text-[#86868b] text-xs leading-relaxed">
+                A <strong>client-side interactive environment</strong> built with React & D3.js. It visualizes the policy scenarios using synthesized parameters derived from the offline analysis.
+            </p>
+        </div>
+
+    </div>
+</div>
             </div>
          </div>
       </Page>

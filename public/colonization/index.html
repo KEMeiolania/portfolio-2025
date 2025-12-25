@@ -616,7 +616,7 @@
             <div>
                 <SensorStrip />
                 <div className="flex justify-between text-[9px] font-mono text-gray-500 mt-2 px-1 bg-white/5 py-1">
-                    <span>LIVE SENSORS</span>
+                    <span>SENSOR SIMULATION</span>
                     <span className="text-accent-alert animate-pulse">14 CRITICAL ALERTS</span>
                 </div>
             </div>
@@ -634,41 +634,74 @@
       </Section>
     );
 
-    const Credits = () => (
-      <section className="w-full bg-[#020202] py-24 px-6 md:px-16 border-t border-chrome-900 relative">
-         <div className="absolute top-0 left-12 w-[1px] h-full bg-white/5 hidden md:block"></div>
-         <div className="mb-20">
+   const Credits = () => (
+    <section className="w-full bg-[#020202] py-24 px-6 md:px-16 border-t border-chrome-900 relative">
+        <div className="absolute top-0 left-12 w-[1px] h-full bg-white/5 hidden md:block"></div>
+        <div className="mb-20">
             <h2 className="text-3xl font-bold tracking-widest text-white uppercase font-display">CREDITS</h2>
-         </div>
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 font-mono text-xs text-gray-400">
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-16 font-mono text-xs text-gray-400">
+            
+            {/* Column 1: About -  */}
             <div className="space-y-4">
-               <h3 className="text-accent-success uppercase tracking-widest text-[10px] mb-4">About</h3>
-               <p className="leading-relaxed">
-                 Reaearch quantifies how neighborhoods are being redesigned into visual consumption stages,where aesthetic over-design creates a severe utility deficit(-68%) and hostile textures displace community residents to serve transient, algorithmic traffic.
-               </p>
+                <h3 className="text-accent-success uppercase tracking-widest text-[10px] mb-4">About</h3>
+                <p className="leading-relaxed">
+                    This interactive installation visualizes the theoretical mechanism of "Algorithmic Colonization."
+                </p>
+                <p className="leading-relaxed">
+                    It utilizes a <strong>simulated utility model</strong> to demonstrate how aesthetic over-design can create a severe utility deficit (represented as -68% in this scenario) and displace community residents to serve transient, algorithmic traffic.
+                </p>
             </div>
+
+            {/* Column 2: People - 保持不变 */}
             <div className="space-y-4">
-               <h3 className="text-accent-success uppercase tracking-widest text-[10px] mb-4">People</h3>
-               <div className="space-y-6">
-                   <div>
-                       <p className="text-white mb-1">Zijian Qiu - <span className="text-gray-500 italic">Principal Investigator</span></p>
-                   </div>
-                   <div>
-                       <p className="text-white mb-1">Weiting Xiong - <span className="text-gray-500 italic">Advisor</span></p>
-                       <p className="text-gray-500">Nanjing Forestry University</p>
-                   </div>
-               </div>
+                <h3 className="text-accent-success uppercase tracking-widest text-[10px] mb-4">People</h3>
+                <div className="space-y-6">
+                    <div>
+                        <p className="text-white mb-1">Zijian Qiu - <span className="text-gray-500 italic">Principal Investigator</span></p>
+                    </div>
+                    <div>
+                        <p className="text-white mb-1">Weiting Xiong - <span className="text-gray-500 italic">Advisor</span></p>
+                        <p className="text-gray-500">Nanjing Forestry University</p>
+                    </div>
+                </div>
             </div>
+
+            {/* Column 3: Architecture */}
             <div className="space-y-4">
-               <h3 className="text-accent-success uppercase tracking-widest text-[10px] mb-4">Output</h3>
-               <div className="space-y-6">
-                   <div><h4 className="text-accent-success mb-1">Full Research Report [PDF]</h4></div>
-                   <div><h4 className="text-accent-success mb-1">Project Repository [GitHub]</h4></div>
-               </div>
+                <h3 className="text-accent-success uppercase tracking-widest text-[10px] mb-4">Technical Architecture</h3>
+                <div className="space-y-6">
+                    
+                    {/* Item 1: 离线计算 (Offline) */}
+                    <div>
+                        <h4 className="text-accent-success mb-1 flex items-center gap-2">
+                           <span className="text-[10px] opacity-70">λ</span> 
+                           Offline Analysis Layer
+                        </h4>
+                        <p className="text-gray-600 text-[10px] leading-relaxed">
+                            Utility deficit metrics and functional displacement logic were calculated offline to establish the theoretical framework. <span className="italic opacity-50">(Internal processing)</span>
+                        </p>
+                    </div>
+
+                    {/* Item 2: 前端模拟 (Frontend) */}
+                    <div>
+                         <h4 className="text-accent-success mb-1 flex items-center gap-2">
+                           <span className="text-[10px] opacity-70">⚡</span>
+                           Frontend Simulation
+                        </h4>
+                        <p className="text-gray-600 text-[10px] leading-relaxed">
+                            Real-time WebGL visualization using <strong>synthesized datasets</strong> to render the flow of "visual consumption" and algorithmic traffic patterns.
+                        </p>
+                    </div>
+
+                </div>
             </div>
-         </div>
-      </section>
-    );
+
+        </div>
+    </section>
+);
+
 
     const App = () => {
       const cursorRef = useRef(null);
