@@ -6,7 +6,7 @@
 >
 > To ensure optimal rendering performance and browser compatibility, complex spatial econometric calculations (including the **Spatial Durbin Model** and **Graph Theory metrics** mentioned in the research scope) were performed **offline** using Python (PySAL/NetworkX).
 >
-> The interactive interfaces presented here utilize **pre-computed parameters** and **representative synthetic datasets** to demonstrate the algorithmic logic and policy scenarios in real-time, without the latency of server-side statistical computing.
+> This visualization utilizes pre-computed parameters derived from actual empirical datasets. This approach ensures real-time performance, allowing for the interactive demonstration of algorithmic logic and policy scenarios without the latency of server-side statistical computing.
 
 ---
 
