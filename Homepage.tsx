@@ -90,21 +90,28 @@ const Homepage = () => {
           </div>
         </div>
       </section>
-   {/* ================= 3.5 DISCLAIMER (SYSTEM NOTICE) ================= */}
-      <section className="mb-24 px-2 relative z-10 group">
-        <div className="border border-[#ffffff15] bg-[#050505] p-6 md:p-8 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-[2px] h-full bg-[#444] group-hover:bg-[#888] transition-colors duration-500"></div>
+      
+  {/* ================= 3.5 DISCLAIMER (SYSTEM NOTICE) ================= */}
+      <section className="mb-32 relative group">
+        <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-[#333] to-transparent"></div>
         
-          <div className="font-mono text-[9px] text-[#666] mb-4 uppercase tracking-widest flex items-center gap-3">
+        <div className="pl-8 md:pl-12 relative">
+          
+          <div className="font-mono text-[10px] text-[#444] mb-6 uppercase tracking-widest flex items-center gap-3">
             <span className="w-1.5 h-1.5 bg-[#555] rounded-full animate-pulse"></span>
             SYS_NOTICE // DATA_DISCLAIMER
           </div>
           
-          <p className="text-[#888] text-xs font-mono leading-relaxed max-w-4xl">
-            The following interactive prototypes are personal explorations in urban algorithms and frontend architecture. 
-            They utilize <span className="text-[#ccc]">synthetic datasets</span> and pre-computed parameters for demonstration purposes, 
-            and do not represent rigorous, peer-reviewed academic findings.
-          </p>
+          <div className="border border-[#ffffff0a] bg-[#050505] p-8 md:p-10 relative overflow-hidden rounded-[2px]">
+            
+            <p className="text-sm md:text-base text-[#a0a0a0] leading-7 font-light font-sans">
+              The following interactive prototypes are personal explorations in urban algorithms and frontend architecture. 
+              They utilize <strong className="text-[#ccc] font-normal">synthetic datasets</strong> and pre-computed parameters for demonstration purposes, 
+              and do not represent rigorous, peer-reviewed academic findings.
+            </p>
+            
+          </div>
+          
         </div>
       </section>
 
