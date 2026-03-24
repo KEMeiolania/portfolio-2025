@@ -166,6 +166,7 @@ const Homepage = () => {
             icon={<Layers size={14} />}
           />
         </div>
+      </section> 
 
       {/* ================= 5. SPECIFICATIONS & FOCUS ================= */}
       <section className="mb-32 px-2">
