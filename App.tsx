@@ -253,7 +253,7 @@ const App: React.FC = () => {
                     <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
                     <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
                 </svg>
-                <span className="font-medium">Offline Analysis Layer</span>
+                <span className="font-medium">Offline Analysis</span>
             </div>
             <p className="text-[#86868b] text-xs leading-relaxed">
                 Utilized <strong>Spatial Durbin Model (SDM)</strong> via Python (PySAL) to calculate spatial spillover effects and density coefficients. <span className="text-[#86868b]/70 italic">(Internal processing)</span>
