@@ -100,7 +100,7 @@ const Homepage = () => {
           <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest">/// 003_Instruments</span>
         </div>
         <div className="border-t border-[#ffffff0a]">
-          <ProjectSlot id="01" title="Matrix City" subtitle="Urban Spatial Diagnosis" tech="REACT / MACHINE VISION" desc="A pixel-level diagnostic framework in Xuanwu District." link="/matrix/index.html" isInternal={false} icon={<Layers size={14} />} />
+          <ProjectSlot id="01" title="Matrix City" subtitle="Spatial Diagnosis" tech="REACT / MACHINE VISION" desc="A pixel-level diagnostic framework in Xuanwu District." link="/matrix/index.html" isInternal={false} icon={<Layers size={14} />} />
           <ProjectSlot id="02" title="Scale. Network. Function." subtitle="Urban Vitality Simulation" tech="REACT / SDM" desc="Causal identification of urban vitality." link="/scale" isInternal={true} icon={<Activity size={14} />} />
           <ProjectSlot id="03" title="Unseen Fractures" subtitle="Community Resilience" tech="D3.JS / GRAPH" desc="Decoding invisible risk structures." link="/fractures/index.html" isInternal={false} icon={<Grid size={14} />} />
           <ProjectSlot id="04" title="Algorithmic Colonization" subtitle="Spatial Texture Analysis" tech="THREE.JS / SHADER" desc="Quantifying memory displacement." link="/colonization/index.html" isInternal={false} icon={<Layers size={14} />} />
