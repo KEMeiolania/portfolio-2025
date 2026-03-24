@@ -125,11 +125,11 @@ const Homepage = () => {
           <ProjectSlot 
             id="01"
             title="Matrix City"
-            subtitle="Spatial Diagnosis"
+            subtitle="Urban Spatial Diagnosis"
             tech="REACT / MACHINE VISION"
             desc="A pixel-level diagnostic framework in Xuanwu District. Decoding physical environment thresholds through multi-source spatial data and machine vision."
-            link="/matrix"
-            isInternal={true}
+            link="/matrix/index.html" 
+            isInternal={false}    
             icon={<Layers size={14} />}
           />
 
