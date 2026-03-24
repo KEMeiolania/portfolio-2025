@@ -124,6 +124,17 @@ const Homepage = () => {
         <div className="border-t border-[#ffffff0a]">
           <ProjectSlot 
             id="01"
+            title="Matrix City"
+            subtitle="Spatial Diagnosis"
+            tech="REACT / MACHINE VISION"
+            desc="A pixel-level diagnostic framework in Xuanwu District. Decoding physical environment thresholds through multi-source spatial data and machine vision."
+            link="/matrix"
+            isInternal={true}
+            icon={<Layers size={14} />}
+          />
+
+          <ProjectSlot 
+            id="02"
             title="Scale. Network. Function."
             subtitle="Urban Vitality Simulation"
             tech="REACT / SDM"
@@ -134,7 +145,7 @@ const Homepage = () => {
           />
 
           <ProjectSlot 
-            id="02"
+            id="03"
             title="Unseen Fractures"
             subtitle="Community Resilience"
             tech="D3.JS / GRAPH"
@@ -145,7 +156,7 @@ const Homepage = () => {
           />
 
           <ProjectSlot 
-            id="03"
+            id="04"
             title="Algorithmic Colonization"
             subtitle="Spatial Texture Analysis"
             tech="THREE.JS / SHADER"
@@ -155,7 +166,6 @@ const Homepage = () => {
             icon={<Layers size={14} />}
           />
         </div>
-      </section>
 
       {/* ================= 5. SPECIFICATIONS & FOCUS ================= */}
       <section className="mb-32 px-2">
@@ -193,7 +203,7 @@ const Homepage = () => {
           <SocialLink href="https://github.com/KEMeiolania" label="GitHub" icon={<Github size={14}/>} />
         </div>
         <div>
-          © 2025 Z.Qiu / All Systems Operational
+          © 2026 Z.Qiu / All Systems Operational
         </div>
       </footer>
 
