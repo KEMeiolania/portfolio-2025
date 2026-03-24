@@ -90,6 +90,30 @@ const Homepage = () => {
           </div>
         </div>
       </section>
+      
+  {/* ================= 3.5 DISCLAIMER (SYSTEM NOTICE) ================= */}
+      <section className="mb-32 relative group">
+        <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-[#333] to-transparent"></div>
+        
+        <div className="pl-8 md:pl-12 relative">
+          
+          <div className="font-mono text-[10px] text-[#444] mb-6 uppercase tracking-widest flex items-center gap-3">
+            <span className="w-1.5 h-1.5 bg-[#555] rounded-full animate-pulse"></span>
+            SYS_NOTICE // DATA_DISCLAIMER
+          </div>
+          
+          <div className="border border-[#ffffff0a] bg-[#050505] p-8 md:p-10 relative overflow-hidden rounded-[2px]">
+            
+            <p className="text-sm md:text-base text-[#a0a0a0] leading-7 font-light font-sans">
+              The following interactive prototypes are personal explorations in urban algorithms and frontend architecture. 
+              They utilize <strong className="text-[#ccc] font-normal">synthetic datasets</strong> and pre-computed parameters for demonstration purposes, 
+              and do not represent rigorous, peer-reviewed academic findings.
+            </p>
+            
+          </div>
+          
+        </div>
+      </section>
 
       {/* ================= 4. INSTRUMENTS ================= */}
       <section className="mb-40">
@@ -100,6 +124,17 @@ const Homepage = () => {
         <div className="border-t border-[#ffffff0a]">
           <ProjectSlot 
             id="01"
+            title="Matrix City"
+            subtitle="Urban Spatial Diagnosis"
+            tech="REACT / MACHINE VISION"
+            desc="A pixel-level diagnostic framework in Xuanwu District. Decoding physical environment thresholds through multi-source spatial data and machine vision."
+            link="/matrix/index.html" 
+            isInternal={false}    
+            icon={<Layers size={14} />}
+          />
+
+          <ProjectSlot 
+            id="02"
             title="Scale. Network. Function."
             subtitle="Urban Vitality Simulation"
             tech="REACT / SDM"
@@ -110,7 +145,7 @@ const Homepage = () => {
           />
 
           <ProjectSlot 
-            id="02"
+            id="03"
             title="Unseen Fractures"
             subtitle="Community Resilience"
             tech="D3.JS / GRAPH"
@@ -121,7 +156,7 @@ const Homepage = () => {
           />
 
           <ProjectSlot 
-            id="03"
+            id="04"
             title="Algorithmic Colonization"
             subtitle="Spatial Texture Analysis"
             tech="THREE.JS / SHADER"
@@ -131,7 +166,6 @@ const Homepage = () => {
             icon={<Layers size={14} />}
           />
         </div>
-      </section>
 
       {/* ================= 5. SPECIFICATIONS & FOCUS ================= */}
       <section className="mb-32 px-2">
@@ -169,7 +203,7 @@ const Homepage = () => {
           <SocialLink href="https://github.com/KEMeiolania" label="GitHub" icon={<Github size={14}/>} />
         </div>
         <div>
-          © 2025 Z.Qiu / All Systems Operational
+          © 2026 Z.Qiu / All Systems Operational
         </div>
       </footer>
 
