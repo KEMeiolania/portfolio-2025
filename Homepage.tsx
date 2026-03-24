@@ -91,7 +91,7 @@ const Homepage = () => {
         </div>
       </section>
       
-  {/* ================= 3.5 DISCLAIMER (SYSTEM NOTICE) ================= */}
+      {/* ================= 3.5 DISCLAIMER (SYSTEM NOTICE) ================= */}
       <section className="mb-32 relative group">
         <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-[#333] to-transparent"></div>
         
@@ -115,24 +115,26 @@ const Homepage = () => {
         </div>
       </section>
 
-{/* ================= 4. INSTRUMENTS ================= */}
+      {/* ================= 4. INSTRUMENTS ================= */}
       <section className="mb-40">
         <div className="flex items-end justify-between mb-8 px-2">
           <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest">/// 003_Instruments</span>
         </div>
 
         <div className="border-t border-[#ffffff0a]">
+          {/* 项目 01: Matrix City (静态页面跳转) */}
           <ProjectSlot 
             id="01"
             title="Matrix City"
             subtitle="Urban Spatial Diagnosis"
             tech="REACT / MACHINE VISION"
             desc="A pixel-level diagnostic framework in Xuanwu District. Decoding physical environment thresholds through multi-source spatial data and machine vision."
-            link="/matrix/index.html" 
-            isInternal={false}    
+            link="/matrix/index.html"
+            isInternal={false}
             icon={<Layers size={14} />}
           />
 
+          {/* 项目 02: Scale. Network. Function. */}
           <ProjectSlot 
             id="02"
             title="Scale. Network. Function."
@@ -144,6 +146,7 @@ const Homepage = () => {
             icon={<Activity size={14} />}
           />
 
+          {/* 项目 03: Unseen Fractures */}
           <ProjectSlot 
             id="03"
             title="Unseen Fractures"
@@ -155,6 +158,7 @@ const Homepage = () => {
             icon={<Grid size={14} />}
           />
 
+          {/* 项目 04: Algorithmic Colonization */}
           <ProjectSlot 
             id="04"
             title="Algorithmic Colonization"
@@ -166,7 +170,7 @@ const Homepage = () => {
             icon={<Layers size={14} />}
           />
         </div>
-      </section> 
+      </section>
 
       {/* ================= 5. SPECIFICATIONS & FOCUS ================= */}
       <section className="mb-32 px-2">
@@ -214,7 +218,7 @@ const Homepage = () => {
 
 // --- 组件库 ---
 
-const ProjectSlot = ({ id, title, subtitle, tech, desc, link, isInternal, icon }) => {
+const ProjectSlot = ({ id, title, subtitle, tech, desc, link, isInternal, icon }: any) => {
   const Wrapper = isInternal ? Link : 'a';
   const props = isInternal ? { to: link } : { href: link };
 
@@ -244,14 +248,14 @@ const ProjectSlot = ({ id, title, subtitle, tech, desc, link, isInternal, icon }
   );
 };
 
-const SpecRow = ({ label, value }) => (
+const SpecRow = ({ label, value }: any) => (
   <div className="flex justify-between py-3 border-b border-[#ffffff05] group hover:bg-[#ffffff02] transition-colors">
     <span className="text-xs font-mono text-[#555] uppercase tracking-wider group-hover:text-[#777]">{label}</span>
     <span className="text-xs font-mono text-[#777] text-right group-hover:text-[#aaa]">{value}</span>
   </div>
 );
 
-const SocialLink = ({ href, label, icon }) => (
+const SocialLink = ({ href, label, icon }: any) => (
   <a href={href} target="_blank" rel="noopener noreferrer" className="hover:text-[#ccc] transition-colors flex items-center gap-2 group">
     <span className="w-1 h-1 bg-[#333] rounded-full group-hover:bg-white transition-colors"></span>
     <span className="flex items-center gap-2">{icon} {label}</span>
