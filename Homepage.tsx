@@ -115,7 +115,7 @@ const Homepage = () => {
         </div>
       </section>
 
-      {/* ================= 4. INSTRUMENTS ================= */}
+{/* ================= 4. INSTRUMENTS ================= */}
       <section className="mb-40">
         <div className="flex items-end justify-between mb-8 px-2">
           <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest">/// 003_Instruments</span>
