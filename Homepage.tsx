@@ -105,7 +105,7 @@ const Homepage = () => {
 
             <p className="text-sm md:text-base text-[#a0a0a0] leading-7 font-light font-sans">
               The following interactive prototypes are personal explorations in urban algorithms and frontend architecture.
-              They utilize <strong className="text-[#ccc] font-normal">synthetic datasets</strong> and pre-computed parameters for demonstration purposes,
+              They partly utilize <strong className="text-[#ccc] font-normal">synthetic datasets</strong> and pre-computed parameters for demonstration purposes,
               and do not represent rigorous, peer-reviewed academic findings.
             </p>
 
